@@ -1,10 +1,15 @@
 import 'package:feed/config/theme/myapptheme.dart';
 import 'package:feed/presentation/loginscreen/loginscreen.dart';
 import 'package:feed/presentation/signupscreen/signupscreen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main(){
-  runApp(Feed());
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+    runApp(Feed());
+
+
 }
 
 class Feed extends StatefulWidget {

@@ -1,6 +1,7 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:feed/presentation/choosemodescreen/choosemodescreen.dart';
 import 'package:flutter/material.dart';
+import 'package:page_transition/page_transition.dart';
 
 class Splashscreendark extends StatefulWidget {
   const Splashscreendark({super.key});
@@ -60,7 +61,12 @@ class _SplashscreendarkState extends State<Splashscreendark> {
           isRepeatingAnimation: false,
           totalRepeatCount: 1,
           pause: const Duration(milliseconds: 1000),
-          onFinished: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ImageAnimationScreen())),
+          onFinished: () => Navigator.push(context , PageTransition(
+            type : PageTransitionType.fade,
+            child : ImageAnimationScreen(),
+            duration: Duration(milliseconds: 300),
+            reverseDuration: Duration(milliseconds: 300)
+          ))
         ) : SizedBox() ,
       
     ) );

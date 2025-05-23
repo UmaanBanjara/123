@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
+import 'package:feed/firebase_auths/google_firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -136,10 +137,15 @@ class _SignupScreenState extends State<SignupScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Image.asset(
-                              AppImages.google(context),
-                              width: 60,
-                              height: 60,
+                            GestureDetector(
+                              onTap: (){
+                                signInWithGoogle(context);
+                              },
+                              child: Image.asset(
+                                AppImages.google(context),
+                                width: 60,
+                                height: 60,
+                              ),
                             ),
                             SizedBox(width: 25),
                             Image.asset(

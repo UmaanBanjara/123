@@ -1,7 +1,14 @@
+import 'dart:convert';
+import 'dart:ui';
+
 import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
+import 'package:feed/firebase_auths/google_firebase_auth.dart';
+import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:feed/presentation/signupscreen/signupscreen.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:page_transition/page_transition.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController emailcontroller = TextEditingController();
   TextEditingController passwordcontroller = TextEditingController();
   bool hidepassword = true;
+  bool isloading = false ; 
 
   String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -36,6 +44,55 @@ class _LoginScreenState extends State<LoginScreen> {
       return 'Password must be at least 6 characters';
     }
     return null;
+  }
+
+
+  Future<void> loginemailandpass() async{
+
+    final email = emailcontroller.text.trim();
+    final password = passwordcontroller.text.trim();
+
+
+    try{
+      setState(() {
+        isloading = true ;
+      });
+
+      final response = await http.post(
+        Uri.parse('http://192.168.1.5:3000/login'),
+        headers: {'Content-Type' : 'application/json'},
+        body: jsonEncode({
+          'email' : email , 
+          'password' : password,
+        })
+      );
+
+      setState(() {
+        isloading = false ;
+      });
+
+      if(response.statusCode==200){
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login successful')),
+        );
+      }
+      else {
+        final error = jsonDecode(response.body)['error'] ?? 'Login failed';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
+    }catch(e){
+      setState(() {
+        isloading = false ; 
+
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+
+    }
+
   }
 
   @override
@@ -115,6 +172,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     GestureDetector(
+                      onTap: (){
+                        signInWithGoogle(context);
+                      },
                         child: Image.asset(AppImages.google(context),
                             width: 50, height: 50)),
                     SizedBox(width: 15),
@@ -130,9 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: GestureDetector(
                     onTap: () {
                       if(_formkey.currentState!.validate()){
-                        ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('validate')),
-                                );
+                       loginemailandpass();
                       }
 
                       else{
@@ -159,8 +217,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () {
                       Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => SignupScreen()));
+                          PageTransition(
+                            type : PageTransitionType.fade,
+                            child : SignupScreen(),
+                            duration: Duration(milliseconds: 300),
+                            reverseDuration: Duration(milliseconds: 300)
+                          ));
                     },
                     child: Text(
                       "Don't have an Account?",
