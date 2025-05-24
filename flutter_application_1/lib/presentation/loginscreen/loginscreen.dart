@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:feed/firebase_auths/google_firebase_auth.dart';
-import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:feed/presentation/signupscreen/signupscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -168,20 +167,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: (){
-                        signInWithGoogle(context);
-                      },
-                        child: Image.asset(AppImages.google(context),
-                            width: 50, height: 50)),
-                    SizedBox(width: 15),
-                    GestureDetector(
-                        child: Image.asset(AppImages.github(context),
-                            width: 30, height: 30)),
-                  ],
+                // Changed here: removed Facebook image and centered Google image
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      signInWithGoogle(context);
+                    },
+                    child: Image.asset(
+                      AppImages.google(context),
+                      width: 50,
+                      height: 50,
+                    ),
+                  ),
                 ),
                 SizedBox(height: 10),
 

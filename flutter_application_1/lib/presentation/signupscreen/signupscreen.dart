@@ -134,26 +134,17 @@ class _SignupScreenState extends State<SignupScreen> {
                         const SizedBox(height: 40),
 
                         // Social icons row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            GestureDetector(
-                              onTap: (){
-                                signInWithGoogle(context);
-                              },
-                              child: Image.asset(
-                                AppImages.google(context),
-                                width: 60,
-                                height: 60,
-                              ),
+                        Center(
+                          child: GestureDetector(
+                            onTap: (){
+                              signInWithGoogle(context);
+                            },
+                            child: Image.asset(
+                              AppImages.google(context),
+                              width: 60,
+                              height: 60,
                             ),
-                            SizedBox(width: 25),
-                            Image.asset(
-                              AppImages.github(context),
-                              width: 30,
-                              height: 30,
-                            ),
-                          ],
+                          ),
                         ),
                         SizedBox(height: 30),
 

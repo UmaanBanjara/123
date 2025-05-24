@@ -8,11 +8,7 @@ class AppImages{
     
   } 
 
-  static String github(BuildContext context){
-    final islight = Theme.of(context).brightness == Brightness.light ; 
-
-    return islight ? "assets/images/github-mark.png" : "assets/images/github-mark-white.png" ;
-  }
+  
 
   
 }
