@@ -1,6 +1,5 @@
 import 'package:feed/config/theme/myapptheme.dart';
-import 'package:feed/presentation/loginscreen/loginscreen.dart';
-import 'package:feed/presentation/signupscreen/signupscreen.dart';
+import 'package:feed/profilecreation/profile_creation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +23,7 @@ class _FeedState extends State<Feed> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false ,
-      home : LoginScreen() ,
+      home : ProfileCreation() ,
       theme: AppTheme.lightTheme,
     );
   }

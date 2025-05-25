@@ -18,6 +18,8 @@ dependencies:
   firebase_auth: ^5.5.4
   google_sign_in: ^6.3.0
   page_transition: ^2.2.1
+  flutter_secure_storage: ^9.2.4
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test: 
@@ -36,14 +38,12 @@ flutter:
     - assets/images/righthand.png
     - assets/images/login.png 
     - assets/images/signup.png
-    - assets/images/github-mark-white.png
-    - assets/images/github-mark.png
-    - assets/images/googledark.png
     - assets/images/googlelight.png
     - assets/images/—Pngtree—girl social media advertising_6477605.png
     - assets/images/—Pngtree—hand drawn pink girl social_5322751.png
     - assets/images/vecteezy_mobile-phone-with-love-for-social-media_12414995.png
-    - assets/images/facebook-circular-logo.png
+    - assets/images/pngwing.com.png
+    - assets/images/v916-nunny-532-removebg-preview.png
 
   fonts:
     - family: "Primary"

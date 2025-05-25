@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:ui';
-
 import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:feed/firebase_auths/google_firebase_auth.dart';
 import 'package:feed/presentation/signupscreen/signupscreen.dart';
+import 'package:feed/profilecreation/profile_creation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 
@@ -18,6 +18,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formkey = GlobalKey<FormState>();
+  final storage = FlutterSecureStorage();
 
   TextEditingController emailcontroller = TextEditingController();
   TextEditingController passwordcontroller = TextEditingController();
@@ -71,8 +72,25 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       if(response.statusCode==200){
+        final responsedata = jsonDecode(response.body);
+        final token = responsedata['token'];
+
+        //store token securely
+
+        await storage.write(key : 'jwt_token' , value : token);
          ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login successful')),
+        );
+        //Navigate to the profile createion page 
+
+        Navigator.pushReplacement(
+          context ,
+          PageTransition(
+            type : PageTransitionType.fade,
+            child : ProfileCreation(),
+            duration: Duration(milliseconds: 300),
+            reverseDuration: Duration(milliseconds: 300)
+          )
         );
       }
       else {

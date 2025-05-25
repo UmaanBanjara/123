@@ -1,6 +1,8 @@
 import 'package:feed/presentation/homescreen/homescreen.dart';
+import 'package:feed/profilecreation/profile_creation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -8,6 +10,8 @@ import 'dart:convert';
 import 'package:page_transition/page_transition.dart';
 
 Future<void> signInWithGoogle(BuildContext context) async {
+
+  final storage = FlutterSecureStorage();
   try {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) {
@@ -49,13 +53,22 @@ Future<void> signInWithGoogle(BuildContext context) async {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+
+        final responsedata = jsonDecode(response.body);
+        final token = responsedata['token'];
+
+        //store token safely
+
+        await storage.write(key: 'jwt_token', value: token );
         // successful login
+
+        
         Navigator.push(
           context , 
           PageTransition(
             
             type: PageTransitionType.fade,
-            child: Homescreen(),
+            child: ProfileCreation(),
             duration: Duration(milliseconds: 300),
             reverseDuration: Duration(milliseconds: 300)
           )
