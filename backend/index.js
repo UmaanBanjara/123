@@ -6,6 +6,16 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const authenticationtoken = require('./authenticatetoken');
+const cloudinary = require('./cloudinary/cloudinary');
+const multer = require('multer');
+const streamifier = require('streamifier');
+
+
+const storage = multer.memoryStorage(); //tells multer to store data in buffer(buffer vaneko temp storage jun RAM ma huncha)
+const upload = multer({storage}); // yo line le multer lai buffer ma store gar vhancha
+
+
+
 
 const app = express();
 const PORT = 3000;
@@ -134,7 +144,7 @@ app.post('/google_signin',  async (req, res) => {
       email : user.email,
       firstName : user.first_name,
       lastName : user.last_name,
-    };
+    };  
 
     const token = jwt.sign(payload , process.env.JWT_secret , {expiresIn : '1h'});
 
@@ -179,7 +189,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(payload, JWT_secret, { expiresIn: '1h' });
 
-    // Successfully login
+    // Successfully login 
     return res.status(200).json({
       message: 'Login successful',
       token,
@@ -230,6 +240,70 @@ catch (err){
 
 });
 
+
+
+
+app.post('/uploadfiles', upload.fields([{name : 'profile_picture' , maxCount : 1} , {name : 'banner' , maxCount : 1 }]) , async(req , res) => {
+
+//  maxcount : 1 , vaneko except 1 file from each propery 
+
+//req.files vaneko ui le pathako files server ma
+  const profilePictureFile = req.files?.['profile_picture']?.[0];
+  const bannerFile = req.files?.['banner']?.[0];
+
+
+  // FIXED: added missing arrow =>
+  const uploadtocloudinary = (fileBuffer , folder) => {
+    return new Promise((resolve , reject) => {
+      //create an upload stream to cloudinary 
+
+        const stream = cloudinary.uploader.upload_stream(
+
+          {},
+          (error , result) => {
+
+            if(error) return reject(error);
+            resolve(result.url);
+          }
+
+
+        );
+
+      streamifier.createReadStream(fileBuffer).pipe(stream);
+
+
+    });
+
+
+  };
+
+  try{
+
+    let profileUrl , bannerUrl;
+
+    if(profilePictureFile){
+      profileUrl = await uploadtocloudinary(profilePictureFile.buffer , 'profile_pictures'); 
+    }
+
+    if(bannerFile){
+      bannerUrl = await uploadtocloudinary(bannerFile.buffer , 'banners');
+    }
+
+    res.status(200).json({
+      message : 'Files uploaded successfully',
+      profile_picture_url : profileUrl || null ,
+      banner_url : bannerUrl || null,
+    });
+
+  }
+  catch(err){
+    // FIXED: Changed error to err
+    console.error(err);
+    res.status(500).json({error : 'Upload Failed' , details : err.message});
+  }
+
+
+});
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });

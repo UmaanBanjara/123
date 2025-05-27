@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
+import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/firebase_auths/google_firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -20,54 +21,32 @@ class _SignupScreenState extends State<SignupScreen> {
   TextEditingController emailcontroller = TextEditingController();
   TextEditingController passwordcontroller = TextEditingController();
   bool hidepassword = true;
-  bool isloading = false ; 
+  bool isloading = false;
 
-
-  Future<void> signupuser() async{
+  Future<void> signupuser() async {
     final url = Uri.parse('http://192.168.1.5:3000/signup');
 
-    try{
+    try {
       final response = await http.post(
         url,
-        headers: {'Content-Type' : 'application/json'},
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'first_name' : firstnamecontroller.text , 
-          'last_name' : lastnamecontroller.text ,
-          'email' : emailcontroller.text ,
-          'password' : passwordcontroller.text
-        })
+          'first_name': firstnamecontroller.text,
+          'last_name': lastnamecontroller.text,
+          'email': emailcontroller.text,
+          'password': passwordcontroller.text,
+        }),
       );
-        
+
       final data = jsonDecode(response.body);
-      if(response.statusCode == 200 || response.statusCode==201){
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Signup successful! Please check your email to verify your account before logging in.',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        errorNotice(context,
+            'Signup successful! Please check your email to verify your account before logging in.');
+      } else {
+        errorNotice(context, data['error'] ?? 'Signup failed');
       }
-
-      else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['error'] ?? 'Signup failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-
-    }
-    catch(e){
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Network error, please try again.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } catch (e) {
+      errorNotice(context, 'Network error, please try again.');
     }
   }
 
@@ -115,11 +94,11 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             child: Stack(
               children: [
-                // Main content column wrapped in Form
                 Form(
                   key: _formkey,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -132,11 +111,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         const SizedBox(height: 40),
-
-                        // Social icons row
                         Center(
                           child: GestureDetector(
-                            onTap: (){
+                            onTap: () {
                               signInWithGoogle(context);
                             },
                             child: Image.asset(
@@ -146,9 +123,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 30),
-
-                        // Firstname and Lastname input row
+                        const SizedBox(height: 30),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -159,15 +134,15 @@ class _SignupScreenState extends State<SignupScreen> {
                                 obscureText: false,
                                 hinttext: "First Name",
                                 validator: validateName,
-                                prefixIcon: Icon(Icons.person),
-                                textStyle: TextStyle(
+                                prefixIcon: const Icon(Icons.person),
+                                textStyle: const TextStyle(
                                   fontSize: 18,
                                   fontFamily: "Texxt",
                                   fontWeight: FontWeight.normal,
                                 ),
                               ),
                             ),
-                            SizedBox(width: 5),
+                            const SizedBox(width: 5),
                             Container(
                               width: 150,
                               child: Customtextfile(
@@ -175,8 +150,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 obscureText: false,
                                 hinttext: "Last Name",
                                 validator: validateName,
-                                prefixIcon: Icon(Icons.person_pin_rounded),
-                                textStyle: TextStyle(
+                                prefixIcon: const Icon(Icons.person_pin_rounded),
+                                textStyle: const TextStyle(
                                   fontSize: 18,
                                   fontFamily: "Texxt",
                                   fontWeight: FontWeight.normal,
@@ -185,9 +160,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 10),
-
-                        // Email and password inputs column
+                        const SizedBox(height: 10),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -196,14 +169,14 @@ class _SignupScreenState extends State<SignupScreen> {
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Padding(
-                                  padding: EdgeInsets.only(left: 12),
+                                  padding: const EdgeInsets.only(left: 12),
                                   child: Customtextfile(
                                     controller: emailcontroller,
                                     validator: validateEmail,
                                     obscureText: false,
                                     hinttext: "your email",
-                                    prefixIcon: Icon(Icons.person_pin_rounded),
-                                    textStyle: TextStyle(
+                                    prefixIcon: const Icon(Icons.person_pin_rounded),
+                                    textStyle: const TextStyle(
                                       fontSize: 18,
                                       fontFamily: "Texxt",
                                       fontWeight: FontWeight.normal,
@@ -212,29 +185,30 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Container(
                               width: 300,
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Padding(
-                                  padding: EdgeInsets.only(left: 12),
+                                  padding: const EdgeInsets.only(left: 12),
                                   child: Customtextfile(
                                     controller: passwordcontroller,
                                     obscureText: hidepassword,
                                     validator: validatePassword,
                                     hinttext: "your password",
-                                    prefixIcon: Icon(Icons.lock),
+                                    prefixIcon: const Icon(Icons.lock),
                                     suffixIcon: IconButton(
-                                      icon: Icon(
-                                          hidepassword ? Icons.visibility_off : Icons.visibility),
+                                      icon: Icon(hidepassword
+                                          ? Icons.visibility_off
+                                          : Icons.visibility),
                                       onPressed: () {
                                         setState(() {
                                           hidepassword = !hidepassword;
                                         });
                                       },
                                     ),
-                                    textStyle: TextStyle(
+                                    textStyle: const TextStyle(
                                       fontSize: 18,
                                       fontFamily: "Texxt",
                                       fontWeight: FontWeight.normal,
@@ -245,45 +219,36 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ],
                         ),
-
-                        SizedBox(height: 20),
-
-                        // Create Account text with GestureDetector
+                        const SizedBox(height: 20),
                         Align(
                           alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () async {
                               if (_formkey.currentState!.validate()) {
                                 setState(() {
-                                  isloading = true ;
+                                  isloading = true;
                                 });
-                               await signupuser();
-
+                                await signupuser();
                                 setState(() {
-                                  isloading = false;  
+                                  isloading = false;
                                 });
-
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Please fix the errors in red before submitting.'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                errorNotice(
+                                    context, 'Please fix the errors in red before submitting.');
                               }
                             },
-                            child: isloading ? const CircularProgressIndicator() : Text(
-                              "Create Account ? ",
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
+                            child: isloading
+                                ? const CircularProgressIndicator()
+                                : Text(
+                                    "Create Account ? ",
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-
-                // Overlay image on top-right
                 Positioned(
                   top: 0,
                   right: 0,

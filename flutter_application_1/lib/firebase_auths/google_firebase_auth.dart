@@ -1,4 +1,4 @@
-import 'package:feed/presentation/homescreen/homescreen.dart';
+import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/profilecreation/profile_creation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +9,9 @@ import 'dart:convert';
 
 import 'package:page_transition/page_transition.dart';
 
-Future<void> signInWithGoogle(BuildContext context) async {
 
+
+Future<void> signInWithGoogle(BuildContext context) async {
   final storage = FlutterSecureStorage();
   try {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -37,8 +38,8 @@ Future<void> signInWithGoogle(BuildContext context) async {
       String? email = user.email;
       String? firstName = user.displayName?.split(' ').first ?? '';
       String? lastName = (user.displayName != null && user.displayName!.split(' ').length > 1)
-      ? user.displayName!.split(' ').last
-      : '';
+          ? user.displayName!.split(' ').last
+          : '';
 
       // Call your backend google_signin API
       final response = await http.post(
@@ -53,39 +54,29 @@ Future<void> signInWithGoogle(BuildContext context) async {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-
         final responsedata = jsonDecode(response.body);
         final token = responsedata['token'];
 
-        //store token safely
+        // store token safely
+        await storage.write(key: 'jwt_token', value: token);
 
-        await storage.write(key: 'jwt_token', value: token );
         // successful login
-
-        
         Navigator.push(
-          context , 
+          context,
           PageTransition(
-            
             type: PageTransitionType.fade,
             child: ProfileCreation(),
-            duration: Duration(milliseconds: 300),
-            reverseDuration: Duration(milliseconds: 300)
-          )
-        );
-
-      } else {
-        final responsebody = jsonDecode(response.body);
-        final errormessage = responsebody['error'] ?? "Unknown error occured";
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errormessage),
-            backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 300),
+            reverseDuration: const Duration(milliseconds: 300),
           ),
         );
+      } else {
+        final responsebody = jsonDecode(response.body);
+        final errormessage = responsebody['error'] ?? "Unknown error occurred";
+        errorNotice(context, errormessage);
       }
     }
   } catch (e) {
-    print('Google Sign-In error: $e');
+    errorNotice(context, 'An error occurred during Google Sign-In.');
   }
 }
