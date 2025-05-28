@@ -57,3 +57,6 @@ flutter:
     - family: "Texxt"
       fonts:
         - asset: assets/fonts/Roboto-VariableFont_wdth,wght.ttf
+    - family: "special"
+      fonts:
+        - asset: assets/fonts/UnifrakturMaguntia-Regular.ttf

@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:feed/core/utils/error_notice.dart';
-import 'package:feed/firebase_auths/google_firebase_auth.dart';
 import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -12,7 +11,6 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 
-// Import your flushbar errorNotice from wherever you put it
 
 class ProfileCreation extends StatefulWidget {
   const ProfileCreation({super.key});
@@ -239,7 +237,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
                   child: AspectRatio(
                     aspectRatio: 3 / 1,
                     child: Container(
-                      color: Colors.grey[300],
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       child: bannerImage != null
                           ? Image.file(bannerImage!, fit: BoxFit.cover)
                           : const Center(child: Icon(Icons.image, size: 40)),
@@ -262,7 +260,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
                       ? null
                       : () async {
                           await uploadFiles();
-                          Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.fade , child: Homescreen() 
+                          Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.fade , child: Homescreen(pfpImage: pfpImage,) 
                           
                           , duration: Duration(milliseconds: 300) , reverseDuration: Duration(milliseconds: 300)
                           
