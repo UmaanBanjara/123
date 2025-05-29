@@ -12,10 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 
 class ProfileCreation extends StatefulWidget {
-
-  final bool isDarkMode ;
-  final VoidCallback onThemeToggle ;
-  const ProfileCreation({super.key , required this.isDarkMode , required this.onThemeToggle});
+  const ProfileCreation({super.key});
 
   @override
   State<ProfileCreation> createState() => _ProfileCreationState();
@@ -279,10 +276,6 @@ class _ProfileCreationState extends State<ProfileCreation> {
                             if (!_formKey.currentState!.validate()) return;
 
                             final uploaded = await uploadFiles();
-                            if (uploaded == null) {
-                              // It's okay if images are not uploaded; your backend accepts null
-                              // so we continue
-                            }
 
                             Navigator.pushReplacement(
                               context,
@@ -291,9 +284,6 @@ class _ProfileCreationState extends State<ProfileCreation> {
                                 duration: const Duration(milliseconds: 300),
                                 reverseDuration: const Duration(milliseconds: 300),
                                 child: Homescreen(
-                                  isDarkMode: widget.isDarkMode,
-                                  onThemeToggle: widget.onThemeToggle,
-
                                   pfpImage: pfpImage,
                                   username: '${username.text.trim()}.feeduser',
                                   bio: bio.text.trim(),

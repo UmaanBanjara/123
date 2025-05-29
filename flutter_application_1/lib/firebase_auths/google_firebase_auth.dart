@@ -9,9 +9,7 @@ import 'dart:convert';
 
 import 'package:page_transition/page_transition.dart';
 
-
-
-Future<void> signInWithGoogle(BuildContext context ,{ required bool  isDarkMode , required  VoidCallback onThemeToggle}) async {
+Future<void> signInWithGoogle(BuildContext context) async {
   final storage = FlutterSecureStorage();
   try {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -60,15 +58,12 @@ Future<void> signInWithGoogle(BuildContext context ,{ required bool  isDarkMode 
         // store token safely
         await storage.write(key: 'jwt_token', value: token);
 
-        // successful login
+        // successful login - navigate to ProfileCreation without dark mode params
         Navigator.push(
           context,
           PageTransition(
             type: PageTransitionType.fade,
-            child: ProfileCreation(
-              isDarkMode: isDarkMode,
-              onThemeToggle: onThemeToggle,
-            ),
+            child: const ProfileCreation(),
             duration: const Duration(milliseconds: 300),
             reverseDuration: const Duration(milliseconds: 300),
           ),

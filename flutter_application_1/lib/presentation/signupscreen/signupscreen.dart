@@ -9,9 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SignupScreen extends StatefulWidget {
-  final bool isDarkMode ;
-  final VoidCallback onThemeToggle; 
-  const SignupScreen({super.key , required this.isDarkMode , required this.onThemeToggle});
+  const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -117,7 +115,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         Center(
                           child: GestureDetector(
                             onTap: () {
-                              signInWithGoogle(context , isDarkMode:  widget.isDarkMode , onThemeToggle: widget.onThemeToggle);
+                              signInWithGoogle(context);
                             },
                             child: Image.asset(
                               AppImages.google(context),
