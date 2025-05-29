@@ -12,9 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 
 class LoginScreen extends StatefulWidget {
-  final bool isDarkMode;
-  final VoidCallback onThemeToggle;
-  const LoginScreen({super.key , required this.isDarkMode , required this.onThemeToggle});
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -29,22 +27,15 @@ class _LoginScreenState extends State<LoginScreen> {
   bool hidepassword = true;
   bool isloading = false;
 
- 
-
   void successNotice(BuildContext context, String message) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     Flushbar(
       messageText: Text(
         message,
-        style: isDark
-            ? theme.textTheme.bodyMedium?.copyWith(color: Colors.white)
-            : theme.textTheme.bodyMedium?.copyWith(color: Colors.black),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
       ),
       duration: const Duration(seconds: 3),
-      backgroundColor: isDark ? Colors.greenAccent : Colors.green,
-      icon: Icon(Icons.check_circle_outline, color: isDark ? Colors.white : Colors.black),
+      backgroundColor: Colors.green,
+      icon: const Icon(Icons.check_circle_outline, color: Colors.white),
       margin: const EdgeInsets.all(16),
       borderRadius: BorderRadius.circular(12),
       flushbarPosition: FlushbarPosition.TOP,
@@ -84,10 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await http.post(
         Uri.parse('http://192.168.1.5:3000/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       setState(() {
@@ -98,20 +86,15 @@ class _LoginScreenState extends State<LoginScreen> {
         final responsedata = jsonDecode(response.body);
         final token = responsedata['token'];
 
-        // store token securely
         await storage.write(key: 'jwt_token', value: token);
 
         successNotice(context, 'Login successful');
 
-        // Navigate to the profile creation page
         Navigator.pushReplacement(
           context,
           PageTransition(
             type: PageTransitionType.fade,
-            child:  ProfileCreation(
-              isDarkMode: widget.isDarkMode ,
-              onThemeToggle:  widget.onThemeToggle,
-            ),
+            child: const ProfileCreation(),
             duration: const Duration(milliseconds: 300),
             reverseDuration: const Duration(milliseconds: 300),
           ),
@@ -214,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: GestureDetector(
                     onTap: () {
-                      signInWithGoogle(context , isDarkMode : widget.isDarkMode , onThemeToggle : widget.onThemeToggle);
+                      signInWithGoogle(context);
                     },
                     child: Image.asset(
                       AppImages.google(context),
@@ -260,10 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context,
                         PageTransition(
                           type: PageTransitionType.fade,
-                          child:  SignupScreen(
-                            isDarkMode: widget.isDarkMode,
-                            onThemeToggle: widget.onThemeToggle,
-                          ),
+                          child: const SignupScreen(),
                           duration: const Duration(milliseconds: 300),
                           reverseDuration: const Duration(milliseconds: 300),
                         ),
