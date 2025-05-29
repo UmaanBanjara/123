@@ -11,7 +11,7 @@ import 'package:page_transition/page_transition.dart';
 
 
 
-Future<void> signInWithGoogle(BuildContext context) async {
+Future<void> signInWithGoogle(BuildContext context ,{ required bool  isDarkMode , required  VoidCallback onThemeToggle}) async {
   final storage = FlutterSecureStorage();
   try {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -65,7 +65,10 @@ Future<void> signInWithGoogle(BuildContext context) async {
           context,
           PageTransition(
             type: PageTransitionType.fade,
-            child: ProfileCreation(),
+            child: ProfileCreation(
+              isDarkMode: isDarkMode,
+              onThemeToggle: onThemeToggle,
+            ),
             duration: const Duration(milliseconds: 300),
             reverseDuration: const Duration(milliseconds: 300),
           ),

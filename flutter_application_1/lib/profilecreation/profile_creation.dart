@@ -12,7 +12,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 
 class ProfileCreation extends StatefulWidget {
-  const ProfileCreation({super.key});
+
+  final bool isDarkMode ;
+  final VoidCallback onThemeToggle ;
+  const ProfileCreation({super.key , required this.isDarkMode , required this.onThemeToggle});
 
   @override
   State<ProfileCreation> createState() => _ProfileCreationState();
@@ -288,6 +291,9 @@ class _ProfileCreationState extends State<ProfileCreation> {
                                 duration: const Duration(milliseconds: 300),
                                 reverseDuration: const Duration(milliseconds: 300),
                                 child: Homescreen(
+                                  isDarkMode: widget.isDarkMode,
+                                  onThemeToggle: widget.onThemeToggle,
+
                                   pfpImage: pfpImage,
                                   username: '${username.text.trim()}.feeduser',
                                   bio: bio.text.trim(),

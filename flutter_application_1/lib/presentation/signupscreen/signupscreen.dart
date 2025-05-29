@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
@@ -8,7 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  final bool isDarkMode ;
+  final VoidCallback onThemeToggle; 
+  const SignupScreen({super.key , required this.isDarkMode , required this.onThemeToggle});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -114,7 +117,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         Center(
                           child: GestureDetector(
                             onTap: () {
-                              signInWithGoogle(context);
+                              signInWithGoogle(context , isDarkMode:  widget.isDarkMode , onThemeToggle: widget.onThemeToggle);
                             },
                             child: Image.asset(
                               AppImages.google(context),

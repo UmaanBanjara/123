@@ -12,7 +12,9 @@ import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+  const LoginScreen({super.key , required this.isDarkMode , required this.onThemeToggle});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -106,7 +108,10 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           PageTransition(
             type: PageTransitionType.fade,
-            child: const ProfileCreation(),
+            child:  ProfileCreation(
+              isDarkMode: widget.isDarkMode ,
+              onThemeToggle:  widget.onThemeToggle,
+            ),
             duration: const Duration(milliseconds: 300),
             reverseDuration: const Duration(milliseconds: 300),
           ),
@@ -209,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: GestureDetector(
                     onTap: () {
-                      signInWithGoogle(context);
+                      signInWithGoogle(context , isDarkMode : widget.isDarkMode , onThemeToggle : widget.onThemeToggle);
                     },
                     child: Image.asset(
                       AppImages.google(context),
@@ -255,7 +260,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         context,
                         PageTransition(
                           type: PageTransitionType.fade,
-                          child: const SignupScreen(),
+                          child:  SignupScreen(
+                            isDarkMode: widget.isDarkMode,
+                            onThemeToggle: widget.onThemeToggle,
+                          ),
                           duration: const Duration(milliseconds: 300),
                           reverseDuration: const Duration(milliseconds: 300),
                         ),

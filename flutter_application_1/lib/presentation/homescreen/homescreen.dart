@@ -8,21 +8,25 @@
         final File? pfpImage;
         final String username ;
         final String bio;
+        final bool isDarkMode;
+        final VoidCallback onThemeToggle; 
 
 
-        const Homescreen({Key? key, this.pfpImage , required this.username , required this.bio}) : super(key: key);
+        const Homescreen({Key? key, this.pfpImage , required this.isDarkMode ,required this.onThemeToggle ,required this.username , required this.bio}) : super(key: key);
 
         @override
         State<Homescreen> createState() => _HomescreenState();
       }
 
       class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
+
         int _selectedIndex = 0;
 
         final GlobalKey<ScaffoldState> _scaffoldkey = GlobalKey<ScaffoldState>();
 
         @override
         Widget build(BuildContext context) {
+
           final iconTheme = Theme.of(context).brightness == Brightness.light;
           final iconColor = iconTheme ? const Color(0XFF464F51) : Colors.yellow;
           final List<Widget> _mainScreens = [
@@ -200,6 +204,22 @@
                       Navigator.pop(context);
                     },
                   ),
+
+                  ListTile(
+                    leading: Icon(
+                      
+                      widget.isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+                      color : iconColor,
+                      size : 30,
+                      
+                      
+                      ),
+
+                      onTap: (){
+                        widget.onThemeToggle();
+                        Navigator.pop(context);
+                      },
+                  )
 
                 
                 ],

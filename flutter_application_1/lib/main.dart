@@ -3,12 +3,10 @@ import 'package:feed/profilecreation/profile_creation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-    runApp(Feed());
-
-
+  runApp(const Feed());
 }
 
 class Feed extends StatefulWidget {
@@ -19,12 +17,25 @@ class Feed extends StatefulWidget {
 }
 
 class _FeedState extends State<Feed> {
+  bool isDarkMode = false;
+
+  void toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false ,
-      home : ProfileCreation() ,
-      theme: AppTheme.darkTheme,
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: ProfileCreation(
+        onThemeToggle: toggleTheme,
+        isDarkMode: isDarkMode,
+      ),
     );
   }
 }
