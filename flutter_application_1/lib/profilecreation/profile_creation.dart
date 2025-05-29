@@ -11,7 +11,6 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 
-
 class ProfileCreation extends StatefulWidget {
   const ProfileCreation({super.key});
 
@@ -20,6 +19,7 @@ class ProfileCreation extends StatefulWidget {
 }
 
 class _ProfileCreationState extends State<ProfileCreation> {
+  final _formKey = GlobalKey<FormState>();
   final storage = FlutterSecureStorage();
   final TextEditingController bio = TextEditingController();
   final TextEditingController username = TextEditingController();
@@ -31,11 +31,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
   bool isloading = false;
 
   Future<Map<String, dynamic>?> uploadFiles() async {
-    if (pfpImage == null && bannerImage == null) return null;
-
-    setState(() {
-      isloading = true;
-    });
+    setState(() => isloading = true);
 
     final token = await storage.read(key: 'jwt_token');
     if (token == null) {
@@ -103,17 +99,17 @@ class _ProfileCreationState extends State<ProfileCreation> {
     return showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Select Image Source'),
+        title: const Text('Select Image Source'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.camera),
+              leading: const Icon(Icons.camera),
               title: Text("Take a Photo", style: Theme.of(context).textTheme.bodySmall),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
-              leading: Icon(Icons.photo_library),
+              leading: const Icon(Icons.photo_library),
               title: Text("Choose from Gallery", style: Theme.of(context).textTheme.bodySmall),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
@@ -127,8 +123,8 @@ class _ProfileCreationState extends State<ProfileCreation> {
     CroppedFile? croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
       aspectRatio: isPfp
-          ? CropAspectRatio(ratioX: 1, ratioY: 1)
-          : CropAspectRatio(ratioX: 3, ratioY: 1),
+          ? const CropAspectRatio(ratioX: 1, ratioY: 1)
+          : const CropAspectRatio(ratioX: 3, ratioY: 1),
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Crop Image',
@@ -162,120 +158,154 @@ class _ProfileCreationState extends State<ProfileCreation> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: ListView(
-            children: [
-              const SizedBox(height: 10),
-              Text("Profile Creation", style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 50),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                const SizedBox(height: 10),
+                Text("Profile Creation", style: Theme.of(context).textTheme.bodyLarge),
+                const SizedBox(height: 50),
 
-              // Username input
-              SizedBox(
-                width: 150,
-                child: Customtextfile(
-                  controller: username,
-                  obscureText: false,
-                  hinttext: "username",
-                  prefixIcon: const Icon(Icons.person),
-                  textStyle: const TextStyle(
-                    fontSize: 18,
-                    fontFamily: "Texxt",
-                    fontWeight: FontWeight.normal,
+                // Username input
+                SizedBox(
+                  width: 250,
+                  child: Customtextfile(
+                    controller: username,
+                    obscureText: false,
+                    prefixIcon: const Icon(Icons.person),
+                    hinttext: "Enter your Username",
+                    suffixText: '.feeduser',
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontFamily: "Texxt",
+                      fontWeight: FontWeight.normal,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Username is required';
+                      }
+                      if (value.trim().length > 10) {
+                        return 'Username cannot exceed 10 characters';
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // Bio input
-              SizedBox(
-                width: 300,
-                child: Customtextfile(
-                  controller: bio,
-                  prefixIcon: const Icon(Icons.featured_play_list_rounded),
-                  obscureText: false,
-                  hinttext: "bio",
-                  textStyle: const TextStyle(
-                    fontSize: 18,
-                    fontFamily: "Texxt",
-                    fontWeight: FontWeight.normal,
+                // Bio input
+                SizedBox(
+                  width: 300,
+                  child: Customtextfile(
+                    controller: bio,
+                    prefixIcon: const Icon(Icons.featured_play_list_rounded),
+                    obscureText: false,
+                    hinttext: "Bio",
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontFamily: "Texxt",
+                      fontWeight: FontWeight.normal,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Bio is required';
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-              // Profile picture
-              Center(
-                child: GestureDetector(
-                  onTap: pickPfp,
-                  child: CircleAvatar(
-                    radius: 50,
-                    child: ClipOval(
-                      child: pfpImage != null
-                          ? Image.file(pfpImage!, width: 100, height: 100, fit: BoxFit.cover)
-                          : Image.asset(
-                              'assets/images/pngwing.com.png',
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                            ),
+                // Profile picture
+                Center(
+                  child: GestureDetector(
+                    onTap: pickPfp,
+                    child: CircleAvatar(
+                      radius: 50,
+                      child: ClipOval(
+                        child: pfpImage != null
+                            ? Image.file(pfpImage!, width: 100, height: 100, fit: BoxFit.cover)
+                            : Image.asset(
+                                'assets/images/pngwing.com.png',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.center,
-                child: Text('Profile Picture', style: Theme.of(context).textTheme.bodyLarge),
-              ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.center,
+                  child: Text('Profile Picture', style: Theme.of(context).textTheme.bodyLarge),
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // Banner
-              GestureDetector(
-                onTap: pickBanner,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: AspectRatio(
-                    aspectRatio: 3 / 1,
-                    child: Container(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      child: bannerImage != null
-                          ? Image.file(bannerImage!, fit: BoxFit.cover)
-                          : const Center(child: Icon(Icons.image, size: 40)),
+                // Banner
+                GestureDetector(
+                  onTap: pickBanner,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: AspectRatio(
+                      aspectRatio: 3 / 1,
+                      child: Container(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        child: bannerImage != null
+                            ? Image.file(bannerImage!, fit: BoxFit.cover)
+                            : const Center(child: Icon(Icons.image, size: 40)),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.center,
-                child: Text("Banner", style: Theme.of(context).textTheme.bodyLarge),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Create Account button
-              Center(
-                child: TextButton(
-                  onPressed: isloading
-                      ? null
-                      : () async {
-                          await uploadFiles();
-                          Navigator.pushReplacement(context, PageTransition(type: PageTransitionType.fade , child: Homescreen(pfpImage: pfpImage,) 
-                          
-                          , duration: Duration(milliseconds: 300) , reverseDuration: Duration(milliseconds: 300)
-                          
-                           ));
-                        },
-                  child: isloading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text('Create Account', style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.center,
+                  child: Text("Banner", style: Theme.of(context).textTheme.bodyLarge),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 20),
+
+                // Create Account button
+                Center(
+                  child: TextButton(
+                    onPressed: isloading
+                        ? null
+                        : () async {
+                            if (!_formKey.currentState!.validate()) return;
+
+                            final uploaded = await uploadFiles();
+                            if (uploaded == null) {
+                              // It's okay if images are not uploaded; your backend accepts null
+                              // so we continue
+                            }
+
+                            Navigator.pushReplacement(
+                              context,
+                              PageTransition(
+                                type: PageTransitionType.fade,
+                                duration: const Duration(milliseconds: 300),
+                                reverseDuration: const Duration(milliseconds: 300),
+                                child: Homescreen(
+                                  pfpImage: pfpImage,
+                                  username: '${username.text.trim()}.feeduser',
+                                  bio: bio.text.trim(),
+                                ),
+                              ),
+                            );
+                          },
+                    child: isloading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text('Create Account', style: Theme.of(context).textTheme.bodyMedium),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

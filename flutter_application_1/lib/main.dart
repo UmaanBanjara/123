@@ -24,7 +24,7 @@ class _FeedState extends State<Feed> {
     return MaterialApp(
       debugShowCheckedModeBanner: false ,
       home : ProfileCreation() ,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
     );
   }
 }
