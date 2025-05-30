@@ -23,6 +23,7 @@ dependencies:
   image_cropper: ^9.1.0
   another_flushbar: ^1.12.30
   flutter_bloc: ^9.1.1
+  characters: ^1.4.0
 
 dev_dependencies:
   flutter_test: 

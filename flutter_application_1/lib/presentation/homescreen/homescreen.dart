@@ -1,20 +1,16 @@
-import 'dart:io';
+import 'dart:convert';
+
+import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:flutter/material.dart';
 import 'package:feed/notification/notificationscreen.dart';
 import 'package:feed/presentation/messagescreen/messagescreen.dart';
 import 'package:feed/presentation/searchscreen/Searchscreen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:page_transition/page_transition.dart';
 
 class Homescreen extends StatefulWidget {
-  final File? pfpImage;
-  final String username;
-  final String bio;
-
-  const Homescreen({
-    Key? key,
-    this.pfpImage,
-    required this.username,
-    required this.bio,
-  }) : super(key: key);
+  const Homescreen({Key? key}) : super(key: key);
 
   @override
   State<Homescreen> createState() => _HomescreenState();
@@ -23,6 +19,42 @@ class Homescreen extends StatefulWidget {
 class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldkey = GlobalKey<ScaffoldState>();
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
+
+  Map<String, dynamic>? userData;
+
+  Future<void> get_user_details() async {
+    final url = Uri.parse('http://192.168.1.5:3000/getuserdetail');
+
+    try {
+      final token = await storage.read(key: 'jwt_token');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          userData = data['user'];
+        });
+      }
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+    } catch (e) {
+      print('Error fetching user details: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    get_user_details();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,161 +73,96 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
       drawer: Drawer(
         backgroundColor: Theme.of(context).drawerTheme.backgroundColor,
         child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  widget.pfpImage != null
-                      ? CircleAvatar(
+            padding: EdgeInsets.zero,
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
+                color: Theme.of(context).scaffoldBackgroundColor,
+                child: GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: (){
+                        Navigator.push(context, 
+                        PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
+                        reverseDuration: Duration(milliseconds: 300)));
+                      },
+                      child: GestureDetector(
+                        onTap : (){
+                           Navigator.push(context, 
+                          PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
+                          reverseDuration: Duration(milliseconds: 300)));
+                        },
+                        child: CircleAvatar(
                           radius: 28,
-                          backgroundImage: FileImage(widget.pfpImage!),
-                        )
-                      : const CircleAvatar(
-                          radius: 28,
-                          backgroundImage:
-                              AssetImage('assets/images/pngwing.com.png'),
+                          backgroundImage: userData?['profile_picture_url'] != null
+                              ? NetworkImage(userData!['profile_picture_url'])
+                              : const AssetImage('assets/images/pngwing.com.png')
+                                  as ImageProvider,
                         ),
-                  const SizedBox(height: 12),
-                  Text(
-                    widget.username.split('.').first.trim(),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: "Primary",
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '@${widget.username}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  const Row(
-                    children: [
-                      Text(
-                        '6 Followers',
-                        style: TextStyle(fontSize: 15),
                       ),
-                      SizedBox(width: 12),
-                      Text(
-                        '6 Following',
-                        style: TextStyle(fontSize: 15),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: (){
+                         Navigator.push(context, 
+                        PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
+                        reverseDuration: Duration(milliseconds: 300)));
+                      },
+                      child: Text(
+                        userData?['username'] ?? 'Username',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: "Primary",
+                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  const Divider(),
-                ],
+                    ),
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap : (){
+                         Navigator.push(context, 
+                        PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
+                        reverseDuration: Duration(milliseconds: 300)));
+                      },
+                      child: Text(
+                        '@${userData?['username'] ?? 'username'}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Text(
+                          '${userData?['followers'] ?? 0} Followers',
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${userData?['following'] ?? 0} Following',
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Divider(),
+                  ],
+                ),
               ),
             ),
-            ListTile(
-              leading: Icon(Icons.home_filled, color: iconColor, size: 30),
-              title: const Text(
-                "Home",
-                style: TextStyle(
-                    fontFamily: "Primary",
-                    fontSize: 30,
-                    fontWeight: FontWeight.normal),
-              ),
-              contentPadding: const EdgeInsets.only(left: 10),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 0;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              leading: Icon(Icons.search, color: iconColor, size: 30),
-              title: const Text(
-                "Search",
-                style: TextStyle(
-                    fontFamily: "Primary",
-                    fontSize: 30,
-                    fontWeight: FontWeight.normal),
-              ),
-              contentPadding: const EdgeInsets.only(left: 10),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 1;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              leading: Icon(Icons.chat, color: iconColor, size: 30),
-              title: const Text(
-                "Messages",
-                style: TextStyle(
-                    fontFamily: "Primary",
-                    fontSize: 30,
-                    fontWeight: FontWeight.normal),
-              ),
-              contentPadding: const EdgeInsets.only(left: 10),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 3;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              leading: Icon(Icons.notifications_active, color: iconColor, size: 30),
-              title: const Text(
-                "Notification",
-                style: TextStyle(
-                    fontFamily: "Primary",
-                    fontSize: 30,
-                    fontWeight: FontWeight.normal),
-              ),
-              contentPadding: const EdgeInsets.only(left: 10),
-              onTap: () {
-                setState(() {
-                  _selectedIndex = 2;
-                });
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              leading: Icon(Icons.person_4_outlined, color: iconColor, size: 30),
-              title: const Text(
-                "Profile",
-                style: TextStyle(
-                    fontFamily: "Primary",
-                    fontSize: 30,
-                    fontWeight: FontWeight.normal),
-              ),
-              contentPadding: const EdgeInsets.only(left: 10),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              leading: Icon(Icons.settings, color: iconColor, size: 30),
-              title: const Text(
-                "Settings",
-                style: TextStyle(
-                    fontFamily: "Primary",
-                    fontSize: 30,
-                    fontWeight: FontWeight.normal),
-              ),
-              contentPadding: const EdgeInsets.only(left: 10),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
+            buildDrawerItem(Icons.home_filled, "Home", 0, iconColor),
+            buildDrawerItem(Icons.search, "Search", 1, iconColor),
+            buildDrawerItem(Icons.chat, "Messages", 3, iconColor),
+            buildDrawerItem(Icons.notifications_active, "Notification", 2, iconColor),
+            buildDrawerItem(Icons.person_4_outlined, "Profile", null, iconColor),
+            buildDrawerItem(Icons.settings, "Settings", null, iconColor),
           ],
         ),
       ),
@@ -222,6 +189,29 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
     );
   }
 
+  ListTile buildDrawerItem(IconData icon, String title, int? index, Color iconColor) {
+    return ListTile(
+      leading: Icon(icon, color: iconColor, size: 30),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: "Primary",
+          fontSize: 30,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      contentPadding: const EdgeInsets.only(left: 10),
+      onTap: () {
+        if (index != null) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        }
+        Navigator.pop(context);
+      },
+    );
+  }
+
   Widget buildHomeTabView() {
     final TabController tabController = TabController(length: 2, vsync: this);
 
@@ -237,25 +227,15 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
         ],
         leading: Padding(
           padding: const EdgeInsets.all(8),
-          child: widget.pfpImage != null
-              ? GestureDetector(
-                  onTap: () {
-                    _scaffoldkey.currentState?.openDrawer();
-                  },
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundImage: FileImage(widget.pfpImage!),
-                  ),
-                )
-              : GestureDetector(
-                  onTap: () {
-                    _scaffoldkey.currentState?.openDrawer();
-                  },
-                  child: const CircleAvatar(
-                    radius: 16,
-                    backgroundImage: AssetImage('assets/images/pngwing.com.png'),
-                  ),
-                ),
+          child: GestureDetector(
+            onTap: () {
+              _scaffoldkey.currentState?.openDrawer();
+            },
+            child: const CircleAvatar(
+              radius: 16,
+              backgroundImage: AssetImage('assets/images/pngwing.com.png'),
+            ),
+          ),
         ),
         bottom: TabBar(
           controller: tabController,

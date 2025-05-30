@@ -1,5 +1,5 @@
 import 'package:feed/config/theme/myapptheme.dart';
-import 'package:feed/profilecreation/profile_creation.dart';
+import 'package:feed/presentation/loginscreen/loginscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -18,8 +18,8 @@ class Feed extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,  // No theme toggling, always light
-      home: const ProfileCreation(),
+      themeMode: ThemeMode.dark,  // No theme toggling, always light
+      home: const LoginScreen(),
     );
   }
 }

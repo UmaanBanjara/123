@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const authenticationtoken = require('./authenticatetoken');
+const authenticationtoken = require('./middleware/authenticateToken');
 const cloudinary = require('./cloudinary/cloudinary');
 const multer = require('multer');
 const streamifier = require('streamifier');
@@ -148,7 +148,8 @@ app.post('/google_signin',  async (req, res) => {
 
     const token = jwt.sign(payload , process.env.JWT_secret , {expiresIn : '1h'});
 
-    return res.status(201).json({ message: 'User created', token , user});
+    return res.status(201).json({ message: 'User created', token , user ,create_at : user.create_at
+});
   } catch (err) {
     console.error('Google signin error:', err.message);
     res.status(500).json({ error: 'Server error' });
@@ -185,6 +186,7 @@ app.post('/login', async (req, res) => {
       email: user.email,
       firstName: user.first_name,
       lastname: user.last_name,
+
     };
 
     const token = jwt.sign(payload, JWT_secret, { expiresIn: '1h' });
@@ -198,16 +200,20 @@ app.post('/login', async (req, res) => {
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
+        create_at : user.create_at
         // exclude password_hash and tokens here for security
       },
     });
   } catch (err) {
     console.error('Login error:', err.message);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: 'Ser ver error' });
   }
 });
 
 app.post('/profilecreation', authenticationtoken , async(req , res) =>{
+
+
+  console.log()
 
 try{
    const { username, profile_picture_url, banner_url } = req.body;
@@ -229,7 +235,13 @@ try{
 
    return res.status(200).json({
     message : 'Profile Updated successfully',
-    user : updateprofile.rows[0],
+    user : {
+
+      username : updateprofile.rows[0].username,
+      profile_picture_url: updateprofile.rows[0].profile_picture_url,
+      banner_url: updateprofile.rows[0].banner_url,
+    }
+
    });
 }
 
@@ -259,7 +271,7 @@ app.post('/uploadfiles', upload.fields([{name : 'profile_picture' , maxCount : 1
 
         const stream = cloudinary.uploader.upload_stream(
 
-          {},
+          {folder : folder},
           (error , result) => {
 
             if(error) return reject(error);
@@ -302,7 +314,29 @@ app.post('/uploadfiles', upload.fields([{name : 'profile_picture' , maxCount : 1
     res.status(500).json({error : 'Upload Failed' , details : err.message});
   }
 
+  
 
+
+});
+
+app.get('/getuserdetail', authenticationtoken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const result = await pool.query(
+      'SELECT username, profile_picture_url, banner_url, email, first_name, last_name, create_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json({ user: result.rows[0] });
+  } catch (err) {
+    console.error('Get profile error:', err.message);
+    return res.status(500).json({ error: 'Server error' });
+  }
 });
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
@@ -311,4 +345,3 @@ app.listen(PORT, '0.0.0.0', () => {
 
 
 
-//what the fuck is thsi shit nigg

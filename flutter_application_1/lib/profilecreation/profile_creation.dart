@@ -7,11 +7,13 @@ import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as Storage;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 
 class ProfileCreation extends StatefulWidget {
+
   const ProfileCreation({super.key});
 
   @override
@@ -20,7 +22,7 @@ class ProfileCreation extends StatefulWidget {
 
 class _ProfileCreationState extends State<ProfileCreation> {
   final _formKey = GlobalKey<FormState>();
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   final TextEditingController bio = TextEditingController();
   final TextEditingController username = TextEditingController();
 
@@ -28,35 +30,36 @@ class _ProfileCreationState extends State<ProfileCreation> {
   File? bannerImage;
   final ImagePicker _picker = ImagePicker();
 
-  bool isloading = false;
+  bool isLoading = false;
 
+  // Upload profile picture and banner images to backend
   Future<Map<String, dynamic>?> uploadFiles() async {
-    setState(() => isloading = true);
+    setState(() => isLoading = true);
 
     final token = await storage.read(key: 'jwt_token');
     if (token == null) {
-      setState(() => isloading = false);
+      setState(() => isLoading = false);
       errorNotice(context, 'Not Authenticated');
       return null;
     }
 
-    var uri = Uri.parse('http://192.168.1.5:3000/uploadfiles');
-    var request = http.MultipartRequest('POST', uri);
+    // Fix: Add '//' after http: for valid URI
+    final uri = Uri.parse('http://192.168.1.5:3000/uploadfiles');
+    final request = http.MultipartRequest('POST', uri);
     request.headers['Authorization'] = 'Bearer $token';
 
     if (pfpImage != null) {
       request.files.add(await http.MultipartFile.fromPath('profile_picture', pfpImage!.path));
     }
-
     if (bannerImage != null) {
       request.files.add(await http.MultipartFile.fromPath('banner', bannerImage!.path));
     }
 
     try {
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
-      setState(() => isloading = false);
+      setState(() => isLoading = false);
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -65,36 +68,74 @@ class _ProfileCreationState extends State<ProfileCreation> {
         return null;
       }
     } catch (e) {
-      setState(() => isloading = false);
+      setState(() => isLoading = false);
       errorNotice(context, 'An error occurred: $e');
       return null;
     }
   }
 
+  // Call backend to create profile with username and bio
+  Future<bool> createProfile(String? profilePictureUrl , String? bannerPictureUrl) async {
+  
+    final token = await storage.read(key : 'jwt_token');
+
+    final url = Uri.parse('http://192.168.1.5:3000/profilecreation');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json' , 
+                  'Authorization' : 'Bearer $token'  ,                             
+                                                    
+                                                    },
+        body: jsonEncode({
+          'username': username.text.trim(),
+          'profile_picture_url' : profilePictureUrl,
+          'banner_url' : bannerPictureUrl
+
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        errorNotice(context, "Profile Created Successfully");
+        return true;
+      } else {
+        errorNotice(context, data['error'] ?? "Profile Creation Failed. Please Try Again");
+        return false;
+      }
+    } catch (e) {
+      errorNotice(context, "Network Error. Please Try Again Later");
+      return false;
+    }
+  }
+
+  // Pick and crop profile picture image
   Future<void> pickPfp() async {
     final source = await _showImageSourceDialog();
     if (source != null) {
       final XFile? picked = await _picker.pickImage(source: source);
       if (picked != null) {
         File imageFile = File(picked.path);
-        File? cropped = await cropImage(imageFile, isPfp: true);
+        final cropped = await cropImage(imageFile, isPfp: true);
         setState(() => pfpImage = cropped ?? imageFile);
       }
     }
   }
 
+  // Pick and crop banner image
   Future<void> pickBanner() async {
     final source = await _showImageSourceDialog();
     if (source != null) {
       final XFile? picked = await _picker.pickImage(source: source);
       if (picked != null) {
         File imageFile = File(picked.path);
-        File? cropped = await cropImage(imageFile, isPfp: false);
+        final cropped = await cropImage(imageFile, isPfp: false);
         setState(() => bannerImage = cropped ?? imageFile);
       }
     }
   }
 
+  // Dialog to choose camera or gallery
   Future<ImageSource?> _showImageSourceDialog() {
     return showDialog<ImageSource>(
       context: context,
@@ -104,7 +145,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera),
+              leading: const Icon(Icons.camera_alt),
               title: Text("Take a Photo", style: Theme.of(context).textTheme.bodySmall),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
@@ -119,8 +160,9 @@ class _ProfileCreationState extends State<ProfileCreation> {
     );
   }
 
+  // Crop the selected image
   Future<File?> cropImage(File imageFile, {required bool isPfp}) async {
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
+    final croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
       aspectRatio: isPfp
           ? const CropAspectRatio(ratioX: 1, ratioY: 1)
@@ -130,8 +172,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
           toolbarTitle: 'Crop Image',
           toolbarColor: Theme.of(context).primaryColor,
           toolbarWidgetColor: Colors.white,
-          initAspectRatio:
-              isPfp ? CropAspectRatioPreset.square : CropAspectRatioPreset.ratio16x9,
+          initAspectRatio: isPfp ? CropAspectRatioPreset.square : CropAspectRatioPreset.ratio16x9,
           lockAspectRatio: true,
         ),
         IOSUiSettings(
@@ -163,7 +204,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
             child: ListView(
               children: [
                 const SizedBox(height: 10),
-                Text("Profile Creation", style: Theme.of(context).textTheme.bodyLarge),
+                Text("Profile Creation", style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 50),
 
                 // Username input
@@ -184,7 +225,10 @@ class _ProfileCreationState extends State<ProfileCreation> {
                       if (value == null || value.trim().isEmpty) {
                         return 'Username is required';
                       }
-                      if (value.trim().length > 10) {
+                      if (value.contains(' ')) {
+                        return 'Username cannot contain spaces';
+                      }
+                      if (value.length > 10) {
                         return 'Username cannot exceed 10 characters';
                       }
                       return null;
@@ -207,8 +251,8 @@ class _ProfileCreationState extends State<ProfileCreation> {
                       fontWeight: FontWeight.normal,
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Bio is required';
+                      if (value != null && value.characters.length > 300) {
+                        return 'Bio cannot exceed 300 characters';
                       }
                       return null;
                     },
@@ -216,12 +260,13 @@ class _ProfileCreationState extends State<ProfileCreation> {
                 ),
                 const SizedBox(height: 30),
 
-                // Profile picture
+                // Profile picture picker
                 Center(
                   child: GestureDetector(
                     onTap: pickPfp,
                     child: CircleAvatar(
                       radius: 50,
+                      backgroundColor : Theme.of(context).scaffoldBackgroundColor,
                       child: ClipOval(
                         child: pfpImage != null
                             ? Image.file(pfpImage!, width: 100, height: 100, fit: BoxFit.cover)
@@ -243,7 +288,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
 
                 const SizedBox(height: 20),
 
-                // Banner
+                // Banner picker
                 GestureDetector(
                   onTap: pickBanner,
                   child: ClipRRect(
@@ -270,28 +315,34 @@ class _ProfileCreationState extends State<ProfileCreation> {
                 // Create Account button
                 Center(
                   child: TextButton(
-                    onPressed: isloading
+                    onPressed: isLoading
                         ? null
                         : () async {
                             if (!_formKey.currentState!.validate()) return;
 
                             final uploaded = await uploadFiles();
 
-                            Navigator.pushReplacement(
-                              context,
-                              PageTransition(
-                                type: PageTransitionType.fade,
-                                duration: const Duration(milliseconds: 300),
-                                reverseDuration: const Duration(milliseconds: 300),
-                                child: Homescreen(
-                                  pfpImage: pfpImage,
-                                  username: '${username.text.trim()}.feeduser',
-                                  bio: bio.text.trim(),
-                                ),
-                              ),
-                            );
+                            if (uploaded != null) {
+                              final profilePictureUrl = uploaded['profile_picture_url'];
+                              final bannerUrl = uploaded['banner_url'];
+                              // Only create profile if upload succeeded
+                              final created = await createProfile(profilePictureUrl, bannerUrl);
+                              if (created) {
+                                // Navigate to home on success
+                                if (!mounted) return;
+                                Navigator.pushReplacement(
+                                  context,
+                                  PageTransition(
+                                    type: PageTransitionType.fade,
+                                    duration: const Duration(milliseconds: 300),
+                                    reverseDuration: const Duration(milliseconds: 300),
+                                    child: const Homescreen(),
+                                  ),
+                                );
+                              }
+                            }
                           },
-                    child: isloading
+                    child: isLoading
                         ? const SizedBox(
                             width: 16,
                             height: 16,

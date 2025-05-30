@@ -110,6 +110,25 @@ class AppTheme {
       color: Colors.black,
       thickness: 1,
     ),
+
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style : ElevatedButton.styleFrom(
+        backgroundColor: Color(0xFFDEFFF2),
+        
+        foregroundColor: Color(0XFF464F51),
+        elevation: 5,
+        padding: EdgeInsets.symmetric(horizontal: 36 , vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+
+        textStyle: TextStyle(
+          fontFamily: "Primary",
+          fontSize: 16,
+          fontWeight: FontWeight.bold
+        )
+      )
+    )
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -236,5 +255,23 @@ class AppTheme {
       color: Colors.white,
       thickness: 1,
     ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style : ElevatedButton.styleFrom(
+        backgroundColor: Colors.black,
+        
+        foregroundColor: Colors.yellow,
+        elevation: 5,
+        padding: EdgeInsets.symmetric(horizontal: 36 , vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+
+        textStyle: TextStyle(
+          fontFamily: "Primary",
+          fontSize: 16,
+          fontWeight: FontWeight.bold
+        )
+      )
+    )
   );
 }
