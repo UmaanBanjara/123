@@ -4,12 +4,15 @@ import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/firebase_auths/google_firebase_auth.dart';
+import 'package:feed/presentation/forgotpass/forgotpass.dart';
 import 'package:feed/presentation/signupscreen/signupscreen.dart';
 import 'package:feed/profilecreation/profile_creation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,20 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool hidepassword = true;
   bool isloading = false;
 
-  void successNotice(BuildContext context, String message) {
-    Flushbar(
-      messageText: Text(
-        message,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
-      ),
-      duration: const Duration(seconds: 3),
-      backgroundColor: Colors.green,
-      icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-      margin: const EdgeInsets.all(16),
-      borderRadius: BorderRadius.circular(12),
-      flushbarPosition: FlushbarPosition.TOP,
-    ).show(context);
-  }
+  
+  
 
   String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -88,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         await storage.write(key: 'jwt_token', value: token);
 
-        successNotice(context, 'Login successful');
+        errorNotice(context, 'Login successful');
 
         Navigator.pushReplacement(
           context,
@@ -186,6 +177,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(right: 27.0),
                     child: GestureDetector(
+                      onTap : (){
+                        Navigator.push(context, 
+                        PageTransition(type: PageTransitionType.fade ,
+                        duration: Duration(milliseconds: 300) ,
+                        reverseDuration: Duration(milliseconds: 300) ,
+                        child : ForgotPasswordPage()));
+                      },
                       child: Text(
                         "Forgot Password?",
                         style: Theme.of(context).textTheme.bodySmall,

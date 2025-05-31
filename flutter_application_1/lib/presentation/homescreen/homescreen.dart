@@ -73,12 +73,12 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
       drawer: Drawer(
         backgroundColor: Theme.of(context).drawerTheme.backgroundColor,
         child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
-                color: Theme.of(context).scaffoldBackgroundColor,
-                child: GestureDetector(
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: GestureDetector(
                 onTap: () {
                   Navigator.pop(context);
                 },
@@ -86,32 +86,37 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     GestureDetector(
-                      onTap: (){
-                        Navigator.push(context, 
-                        PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
-                        reverseDuration: Duration(milliseconds: 300)));
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.fade,
+                            child: const UserProfile(),
+                            duration: const Duration(milliseconds: 300),
+                            reverseDuration: const Duration(milliseconds: 300),
+                          ),
+                        );
                       },
-                      child: GestureDetector(
-                        onTap : (){
-                           Navigator.push(context, 
-                          PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
-                          reverseDuration: Duration(milliseconds: 300)));
-                        },
-                        child: CircleAvatar(
-                          radius: 28,
-                          backgroundImage: userData?['profile_picture_url'] != null
-                              ? NetworkImage(userData!['profile_picture_url'])
-                              : const AssetImage('assets/images/pngwing.com.png')
-                                  as ImageProvider,
-                        ),
+                      child: CircleAvatar(
+                        radius: 28,
+                        backgroundImage: userData?['profile_picture_url'] != null
+                            ? NetworkImage(userData!['profile_picture_url'])
+                            : const AssetImage('assets/images/pngwing.com.png')
+                                as ImageProvider,
                       ),
                     ),
                     const SizedBox(height: 12),
                     GestureDetector(
-                      onTap: (){
-                         Navigator.push(context, 
-                        PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
-                        reverseDuration: Duration(milliseconds: 300)));
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.fade,
+                            child: const UserProfile(),
+                            duration: const Duration(milliseconds: 300),
+                            reverseDuration: const Duration(milliseconds: 300),
+                          ),
+                        );
                       },
                       child: Text(
                         userData?['username'] ?? 'Username',
@@ -124,10 +129,16 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 4),
                     GestureDetector(
-                      onTap : (){
-                         Navigator.push(context, 
-                        PageTransition(type: PageTransitionType.fade , child : UserProfile() , duration: Duration(milliseconds: 300),
-                        reverseDuration: Duration(milliseconds: 300)));
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.fade,
+                            child: const UserProfile(),
+                            duration: const Duration(milliseconds: 300),
+                            reverseDuration: const Duration(milliseconds: 300),
+                          ),
+                        );
                       },
                       child: Text(
                         '@${userData?['username'] ?? 'username'}',
@@ -231,9 +242,11 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
             onTap: () {
               _scaffoldkey.currentState?.openDrawer();
             },
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 16,
-              backgroundImage: AssetImage('assets/images/pngwing.com.png'),
+              backgroundImage: userData?['profile_picture_url'] != null
+                  ? NetworkImage(userData!['profile_picture_url'])
+                  : const AssetImage("assets/images/pngwing.com.png") as ImageProvider,
             ),
           ),
         ),

@@ -77,4 +77,4 @@ Future<void> signInWithGoogle(BuildContext context) async {
   } catch (e) {
     errorNotice(context, 'An error occurred during Google Sign-In.');
   }
-}
+} 
