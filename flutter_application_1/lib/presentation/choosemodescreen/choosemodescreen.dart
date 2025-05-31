@@ -85,42 +85,58 @@ class _ImageAnimationScreenState extends State<ImageAnimationScreen> {
             child: Image.asset('assets/images/moon.png', width: 50),
           ),
 
-          // Show toggle only after animations finish
+          // Show toggle and button only after animations finish
           if (showToggle)
             Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: EdgeInsets.only(bottom: 40),
-                child: Row(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      "LIGHT",
-                      style: TextStyle(
-                        color: isdark ? Colors.grey : Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "LIGHT",
+                          style: TextStyle(
+                            color: isdark ? Colors.grey : Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Switch(
+                          value: isdark,
+                          activeColor: Colors.yellow,
+                          activeTrackColor: Colors.yellow.shade400,
+                          inactiveThumbColor: Color(0xFFDEFFF2),
+                          inactiveTrackColor:
+                              Color(0xFFDEFFF2).withOpacity(0.4),
+                          onChanged: (value) {
+                            setState(() {
+                              isdark = value;
+                            });
+                          },
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          "DARK",
+                          style: TextStyle(
+                            color: isdark ? Colors.white : Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 8),
-                    Switch(
-                      value: isdark,
-                      activeColor: Colors.grey,
-                      activeTrackColor: Colors.grey.shade400,
-                      inactiveThumbColor: Colors.white,
-                      inactiveTrackColor: Colors.grey.shade300,
-                      onChanged: (value) {
-                        setState(() {
-                          isdark = value;
-                        });
+
+                    SizedBox(height: 16),
+
+                    ElevatedButton(
+                      onPressed: () {
+                        // Your choose button logic here
+                        print('Choose button pressed');
                       },
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      "DARK",
-                      style: TextStyle(
-                        color: isdark ? Colors.white : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      child: Text('Choose'),
                     ),
                   ],
                 ),

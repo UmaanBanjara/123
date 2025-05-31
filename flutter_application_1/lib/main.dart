@@ -1,14 +1,24 @@
-import 'package:feed/config/theme/myapptheme.dart';
-import 'package:feed/presentation/loginscreen/loginscreen.dart';
-import 'package:feed/presentation/homescreen/homescreen.dart'; // Replace with your actual home screen import
+import 'package:feed/data/bloc/theme_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import 'config/theme/myapptheme.dart';
+import 'presentation/choosemodescreen/choosemodescreen.dart';
+import 'presentation/loginscreen/loginscreen.dart';
+import 'presentation/homescreen/homescreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const Feed());
+
+  runApp(
+    BlocProvider(
+      create: (_) => ThemeCubit(),
+      child: const Feed(),
+    ),
+  );
 }
 
 class Feed extends StatelessWidget {
@@ -16,12 +26,18 @@ class Feed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
-      home: const SplashScreen(), // Start with SplashScreen
+    return BlocBuilder<ThemeCubit, ThemeData>(
+      builder: (context, theme) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: theme.brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          home:  ImageAnimationScreen(), // You can replace with SplashScreen
+        );
+      },
     );
   }
 }
