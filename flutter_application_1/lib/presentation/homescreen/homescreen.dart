@@ -1,7 +1,6 @@
 import 'dart:convert';
-
-import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:flutter/material.dart';
+import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:feed/notification/notificationscreen.dart';
 import 'package:feed/presentation/messagescreen/messagescreen.dart';
 import 'package:feed/presentation/searchscreen/Searchscreen.dart';
@@ -10,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 
 class Homescreen extends StatefulWidget {
+
   const Homescreen({Key? key}) : super(key: key);
 
   @override
@@ -18,22 +18,19 @@ class Homescreen extends StatefulWidget {
 
 class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-  final GlobalKey<ScaffoldState> _scaffoldkey = GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   Map<String, dynamic>? userData;
 
-  Future<void> get_user_details() async {
+  Future<void> getUserDetails() async {
     final url = Uri.parse('http://192.168.1.5:3000/getuserdetail');
 
     try {
       final token = await storage.read(key: 'jwt_token');
-
       final response = await http.get(
         url,
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -53,7 +50,7 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    get_user_details();
+    getUserDetails();
   }
 
   @override
@@ -63,130 +60,20 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
 
     final List<Widget> _mainScreens = [
       buildHomeTabView(),
-      Searchscreen(),
-      Notificationscreen(),
-      Messagescreen(),
+      const Searchscreen(),
+      const Notificationscreen(),
+      const Messagescreen(),
     ];
 
     return Scaffold(
-      key: _scaffoldkey,
-      drawer: Drawer(
-        backgroundColor: Theme.of(context).drawerTheme.backgroundColor,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          PageTransition(
-                            type: PageTransitionType.fade,
-                            child: const UserProfile(),
-                            duration: const Duration(milliseconds: 300),
-                            reverseDuration: const Duration(milliseconds: 300),
-                          ),
-                        );
-                      },
-                      child: CircleAvatar(
-                        radius: 28,
-                        backgroundImage: userData?['profile_picture_url'] != null
-                            ? NetworkImage(userData!['profile_picture_url'])
-                            : const AssetImage('assets/images/pngwing.com.png')
-                                as ImageProvider,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          PageTransition(
-                            type: PageTransitionType.fade,
-                            child: const UserProfile(),
-                            duration: const Duration(milliseconds: 300),
-                            reverseDuration: const Duration(milliseconds: 300),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        userData?['username'] ?? 'Username',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: "Primary",
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          PageTransition(
-                            type: PageTransitionType.fade,
-                            child: const UserProfile(),
-                            duration: const Duration(milliseconds: 300),
-                            reverseDuration: const Duration(milliseconds: 300),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        '@${userData?['username'] ?? 'username'}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Text(
-                          '${userData?['followers'] ?? 0} Followers',
-                          style: const TextStyle(fontSize: 15),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${userData?['following'] ?? 0} Following',
-                          style: const TextStyle(fontSize: 15),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Divider(),
-                  ],
-                ),
-              ),
-            ),
-            buildDrawerItem(Icons.home_filled, "Home", 0, iconColor),
-            buildDrawerItem(Icons.search, "Search", 1, iconColor),
-            buildDrawerItem(Icons.chat, "Messages", 3, iconColor),
-            buildDrawerItem(Icons.notifications_active, "Notification", 2, iconColor),
-            buildDrawerItem(Icons.person_4_outlined, "Profile", null, iconColor),
-            buildDrawerItem(Icons.settings, "Settings", null, iconColor),
-          ],
-        ),
-      ),
+      key: _scaffoldKey,
+      drawer: buildDrawer(iconColor),
       body: _mainScreens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        onTap: (index) => setState(() => _selectedIndex = index),
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
@@ -195,6 +82,84 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
           BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'),
+        ],
+      ),
+    );
+  }
+
+  Drawer buildDrawer(Color iconColor) {
+    return Drawer(
+      backgroundColor: Theme.of(context).drawerTheme.backgroundColor,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      child: UserProfile(),
+                      duration: const Duration(milliseconds: 300),
+                      reverseDuration: const Duration(milliseconds: 300),
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 28,
+                    backgroundImage: userData?['profile_picture_url'] != null
+                        ? NetworkImage(userData!['profile_picture_url'])
+                        : const AssetImage('assets/images/pngwing.com.png') as ImageProvider,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      child: UserProfile(),
+                      duration: const Duration(milliseconds: 300),
+                      reverseDuration: const Duration(milliseconds: 300),
+                    ),
+                  ),
+                  child: Text(
+                    userData?['username'] ?? 'Username',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: "Primary",
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '@${userData?['username'] ?? 'username'}.feeduser',
+                  style: const TextStyle(fontSize: 15, color: Colors.grey),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Text('${userData?['followers'] ?? 0} Followers', style: const TextStyle(fontSize: 15)),
+                    const SizedBox(width: 12),
+                    Text('${userData?['following'] ?? 0} Following', style: const TextStyle(fontSize: 15)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Divider(),
+              ],
+            ),
+          ),
+          buildDrawerItem(Icons.home_filled, "Home", 0, iconColor),
+          buildDrawerItem(Icons.search, "Search", 1, iconColor),
+          buildDrawerItem(Icons.chat, "Messages", 3, iconColor),
+          buildDrawerItem(Icons.notifications_active, "Notification", 2, iconColor),
+          buildDrawerItem(Icons.person_4_outlined, "Profile", null, iconColor),
+          buildDrawerItem(Icons.settings, "Settings", null, iconColor),
         ],
       ),
     );
@@ -239,9 +204,7 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
         leading: Padding(
           padding: const EdgeInsets.all(8),
           child: GestureDetector(
-            onTap: () {
-              _scaffoldkey.currentState?.openDrawer();
-            },
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
             child: CircleAvatar(
               radius: 16,
               backgroundImage: userData?['profile_picture_url'] != null

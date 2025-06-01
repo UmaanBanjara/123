@@ -110,25 +110,28 @@ class AppTheme {
       color: Colors.black,
       thickness: 1,
     ),
-
     elevatedButtonTheme: ElevatedButtonThemeData(
-      style : ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFFDEFFF2),
-        
-        foregroundColor: Color(0XFF464F51),
-        elevation: 5,
-        padding: EdgeInsets.symmetric(horizontal: 36 , vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+      style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFFDEFFF2),
+          foregroundColor: Color(0XFF464F51),
+          elevation: 0,
+          padding: EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+              fontFamily: "Primary", fontSize: 16, fontWeight: FontWeight.bold)),
+    ),
 
-        textStyle: TextStyle(
-          fontFamily: "Primary",
-          fontSize: 16,
-          fontWeight: FontWeight.bold
-        )
-      )
-    )
+    // Added FloatingActionButtonThemeData for lightTheme
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: const Color(0XFF464F51),
+      foregroundColor: const Color(0xFFDEFFF2),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -169,7 +172,6 @@ class AppTheme {
       bodySmall: TextStyle(color: Colors.white, fontFamily: "Texxt"),
     ),
 
-    // **Improved input decoration theme:**
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.grey.shade900, // Dark grey fill for better contrast
@@ -256,22 +258,26 @@ class AppTheme {
       thickness: 1,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
-      style : ElevatedButton.styleFrom(
-        backgroundColor: Colors.black,
-        
-        foregroundColor: Colors.yellow,
-        elevation: 5,
-        padding: EdgeInsets.symmetric(horizontal: 36 , vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+      style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.yellow,
+          elevation: 0,
+          padding: EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+              fontFamily: "Primary", fontSize: 16, fontWeight: FontWeight.bold)),
+    ),
 
-        textStyle: TextStyle(
-          fontFamily: "Primary",
-          fontSize: 16,
-          fontWeight: FontWeight.bold
-        )
-      )
-    )
+    // Added FloatingActionButtonThemeData for darkTheme
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: Colors.yellow,
+      foregroundColor: Colors.black,
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
   );
 }

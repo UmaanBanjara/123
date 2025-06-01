@@ -27,6 +27,7 @@ dependencies:
   equatable: ^2.0.7
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test: 
@@ -46,6 +47,7 @@ flutter:
     - assets/images/login.png 
     - assets/images/signup.png
     - assets/images/googlelight.png
+    - assets/images/googledark.png
     - assets/images/—Pngtree—girl social media advertising_6477605.png
     - assets/images/—Pngtree—hand drawn pink girl social_5322751.png
     - assets/images/vecteezy_mobile-phone-with-love-for-social-media_12414995.png

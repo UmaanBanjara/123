@@ -7,7 +7,6 @@ import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/http.dart' as Storage;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
@@ -89,6 +88,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
                                                     },
         body: jsonEncode({
           'username': username.text.trim(),
+          'bio' : bio.text.trim(),
           'profile_picture_url' : profilePictureUrl,
           'banner_url' : bannerPictureUrl
 
@@ -336,7 +336,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
                                     type: PageTransitionType.fade,
                                     duration: const Duration(milliseconds: 300),
                                     reverseDuration: const Duration(milliseconds: 300),
-                                    child: const Homescreen(),
+                                    child: Homescreen(),
                                   ),
                                 );
                               }

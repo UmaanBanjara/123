@@ -9,9 +9,9 @@
   const cloudinary = require('./cloudinary/cloudinary');
   const multer = require('multer');
   const streamifier = require('streamifier');
-  const forgotPassword = require('./forgotpass/forgotpass');
+  /*const forgotPassword = require('./forgotpass/forgotpass');
   const getResetPass = require('./forgotpass/getresetpass');
-  const postResetPass = require('./forgotpass/postresetpass');
+  const postResetPass = require('./forgotpass/postresetpass');*/
 
 
 
@@ -19,9 +19,9 @@
 
   const app = express();
 
-  app.post('/forgot-password', forgotPassword);
+  /*app.post('/forgot-password', forgotPassword);
   app.get('/reset-password', getResetPass);
-  app.post('/reset-password', postResetPass);
+  app.post('/reset-password', postResetPass);*/
 
 
 
@@ -219,39 +219,40 @@
     }
   });
 
-  // Profile creation/update route (authenticated)
-  app.post('/profilecreation', authenticationtoken, async (req, res) => {
-    try {
-      const { username, profile_picture_url, banner_url } = req.body;
-      const userId = req.user.userId;
+    // Profile creation/update route (authenticated)
+    app.post('/profilecreation', authenticationtoken, async (req, res) => {
+      try {
+        const { username, profile_picture_url, banner_url , bio} = req.body;
+        const userId = req.user.userId;
 
-      // Check if username is taken by other user
-      const usernamecheck = await pool.query('SELECT * FROM users WHERE username = $1 AND id != $2', [username, userId]);
+        // Check if username is taken by other user
+        const usernamecheck = await pool.query('SELECT * FROM users WHERE username = $1 AND id != $2', [username, userId]);
 
-      if (usernamecheck.rows.length > 0) {
-        return res.status(400).json({ error: 'Username already taken, please choose another one' });
+        if (usernamecheck.rows.length > 0) {
+          return res.status(400).json({ error: 'Username already taken, please choose another one' });
+        }
+
+        // Update profile details
+        const updateprofile = await pool.query(
+          `UPDATE users SET username = $1, profile_picture_url = $2, banner_url = $3, profile_completed = $4, bio = $5 WHERE id = $6 RETURNING *`,
+          [username, profile_picture_url, banner_url, true,bio , userId]
+        );
+
+
+        return res.status(200).json({
+          message: 'Profile updated successfully',
+          user: {
+            username: updateprofile.rows[0].username,
+            profile_picture_url: updateprofile.rows[0].profile_picture_url,
+            banner_url: updateprofile.rows[0].banner_url,
+            bio : updateprofile.rows[0].bio
+          },
+        });
+      } catch (err) {
+        console.error('Profile creation error:', err.message);
+        res.status(500).json({ error: 'Server error' });
       }
-
-      // Update profile details
-      const updateprofile = await pool.query(
-        `UPDATE users SET username = $1, profile_picture_url = $2, banner_url = $3, profile_completed = $4 WHERE id = $5 RETURNING *`,
-        [username, profile_picture_url, banner_url, true, userId]
-      );
-
-
-      return res.status(200).json({
-        message: 'Profile updated successfully',
-        user: {
-          username: updateprofile.rows[0].username,
-          profile_picture_url: updateprofile.rows[0].profile_picture_url,
-          banner_url: updateprofile.rows[0].banner_url,
-        },
-      });
-    } catch (err) {
-      console.error('Profile creation error:', err.message);
-      res.status(500).json({ error: 'Server error' });
-    }
-  });
+    });
 
   // File upload route for profile picture and banner
   app.post('/uploadfiles', upload.fields([{ name: 'profile_picture', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), async (req, res) => {
@@ -301,7 +302,7 @@
       const userId = req.user.userId;
 
       const result = await pool.query(
-        'SELECT username, profile_picture_url, banner_url, email, first_name, last_name, create_at FROM users WHERE id = $1',
+        'SELECT username, profile_picture_url, banner_url, email, first_name, last_name, create_at ,bio FROM users WHERE id = $1',
         [userId]
       );
 
