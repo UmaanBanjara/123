@@ -67,3 +67,15 @@ flutter:
     - family: "special"
       fonts:
         - asset: assets/fonts/UnifrakturMaguntia-Regular.ttf
+    - family: "bOLD"
+      fonts:
+        - asset: assets/fonts/Chirp-Bold.otf
+    - family: "hEAVY"
+      fonts:
+        - asset: assets/fonts/Chirp-Heavy.otf
+    - family: "lIGHT"
+      fonts:
+        - asset: assets/fonts/Chirp-Light.otf
+    - family: "rEGULAR"
+      fonts:
+        - asset: assets/fonts/Chirp-Regular.otf
