@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:feed/core/utils/error_notice.dart';
+import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -9,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:feed/core/common/custom_textfield.dart';
+import 'package:page_transition/page_transition.dart';
 
 class EditPage extends StatefulWidget {
   const EditPage({super.key});
@@ -241,7 +243,10 @@ class _EditPageState extends State<EditPage> {
                   child: ListView(
                     children: [
                       const SizedBox(height: 10),
-                      Text("Edit Profile", style: Theme.of(context).textTheme.headlineSmall),
+                      Text("Edit Profile", style : TextStyle(
+                        fontFamily: "Primary" , 
+                        fontSize: 25
+                      )),
                       const SizedBox(height: 30),
 
                       // Username
@@ -342,11 +347,21 @@ class _EditPageState extends State<EditPage> {
                                     setState(() => isLoading = false);
 
                                     if (success) {
-                                      Navigator.pop(context);  // Just go back
+                                      Navigator.pushReplacement(
+                                        context,
+                                        PageTransition(
+                                          type: PageTransitionType.fade,
+                                          duration: Duration(milliseconds: 300),
+                                          child: Homescreen(),
+                                          reverseDuration: Duration(milliseconds: 300),
+                                        ),
+                                      );
                                     }
                                   }
                                 },
-                          child: const Text('Update Profile'),
+                          child: const Text('Update Profile' , style: TextStyle(
+                            fontSize: 25
+                          ),),
                         ),
                       ),
                     ],

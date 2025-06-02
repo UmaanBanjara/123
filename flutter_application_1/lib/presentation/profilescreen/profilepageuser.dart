@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:feed/editpage/editpage.dart';
 import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
   late TabController _tabController;
 
   final List<Tab> myTabs = [
-    const Tab(text: 'Post'),
+    const Tab(text: 'Post' ,),
     const Tab(text: 'Replies'),
     const Tab(text: 'Likes'),
     const Tab(text: 'Media'),
@@ -144,7 +145,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                         color: Colors.grey[300],
                                         image: userData?['banner_url'] != null
                                             ? DecorationImage(
-                                                image: NetworkImage(userData!['banner_url']),
+                                                image: CachedNetworkImageProvider(userData!['banner_url']),
                                                 fit: BoxFit.cover,
                                               )
                                             : null,
@@ -156,7 +157,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                     left: 8,
                                     child: IconButton(
                                       icon: Icon(Icons.arrow_back,
-                                          color: isDark ? Colors.white : Colors.black),
+                                          color: isDark ? Colors.white : Colors.white),
                                       onPressed: _goToHomeScreen,
                                     ),
                                   ),
@@ -181,7 +182,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                           radius: 40,
                                           backgroundColor: Colors.grey.withOpacity(0.2),
                                           backgroundImage: userData?['profile_picture_url'] != null
-                                              ? NetworkImage(userData!['profile_picture_url'])
+                                              ? CachedNetworkImageProvider(userData!['profile_picture_url'])
                                               : const AssetImage("assets/images/pngwing.com.png")
                                                   as ImageProvider,
                                         ),
@@ -189,11 +190,11 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                     ),
                                   ),
                                   Positioned(
-                                    top: 118,
+                                    top: 123,
                                     right: 5,
                                     child: ElevatedButton(
                                       onPressed: _goToEditPage,
-                                      child: const Text('Edit profile'),
+                                      child:  Text('Edit profile'),
                                     ),
                                   ),
                                 ],
@@ -204,23 +205,19 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                               child: Text(
                                 (userData?['username'] ?? '').split('.').first.trim(),
                                 style: const TextStyle(
-                                  fontFamily: "Primary",
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 26,
+                                  fontFamily: "bOLD",
+                                  fontSize: 25,
                                 ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(left: 17, top: 3),
+                              padding: const EdgeInsets.only(left: 17, top: 2),
                               child: Text(
                                 '@${userData?['username'] ?? ''}.feeduser',
                                 style: TextStyle(
-                                  fontFamily: "Texxt",
-                                  fontWeight: FontWeight.normal,
+                                  fontFamily: "lIGHT",
                                   fontSize: 15,
-                                  color: isDark
-                                      ? Colors.grey.withOpacity(0.7)
-                                      : Colors.black.withOpacity(0.4),
+                                  color : Colors.grey
                                 ),
                               ),
                             ),
@@ -231,7 +228,8 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                     ? "No bio provided."
                                     : userData!['bio'],
                                 style: const TextStyle(
-                                  fontFamily: "Texxt",
+                                  fontFamily: "rEGULAR",
+                                  color: Colors.grey,
                                   fontWeight: FontWeight.normal,
                                   fontSize: 14,
                                 ),
@@ -239,41 +237,44 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                             ),
                             if (userData?['create_at'] != null)
                               Padding(
-                                padding: const EdgeInsets.only(left: 14, top: 8),
+                                padding: const EdgeInsets.only(left: 16, top: 9),
                                 child: Row(
                                   children: [
                                     Icon(Icons.calendar_today,
                                         size: 16,
-                                        color: isDark ? Colors.white : Colors.black),
+                                        color: isDark ? Colors.grey : Colors.grey),
                                     const SizedBox(width: 5),
                                     Text(
                                       'Joined ${_formatJoinDate(userData!['create_at'])}',
                                       style: const TextStyle(
-                                          fontSize: 13,
-                                          fontFamily: "Texxt",
+                                          fontSize: 14,
+                                          fontFamily: "rEGULAR",
+                                          color: Colors.grey,
                                           fontWeight: FontWeight.normal),
                                     ),
                                   ],
                                 ),
                               ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 12),
                             Padding(
-                              padding: const EdgeInsets.only(left: 15),
+                              padding: const EdgeInsets.only(left: 16),
                               child: Row(
                                 children: [
                                   Text(
                                     '${userData?['followers'] ?? 0} Followers',
                                     style: const TextStyle(
-                                        fontSize: 15,
-                                        fontFamily: "Texxt",
+                                        fontSize: 14,
+                                        fontFamily: "rEGULAR",
+                                        color: Colors.grey,
                                         fontWeight: FontWeight.normal),
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
                                     '${userData?['following'] ?? 0} Following',
                                     style: const TextStyle(
-                                        fontSize: 15,
-                                        fontFamily: "Texxt",
+                                        fontSize: 14,
+                                        fontFamily: "rEGULAR",
+                                        color: Colors.grey,
                                         fontWeight: FontWeight.normal),
                                   ),
                                 ],
@@ -291,6 +292,8 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                             tabs: myTabs,
                             unselectedLabelColor: Colors.grey,
                             indicatorColor: Colors.blue,
+                        
+                            
                           ),
                         ),
                       ),

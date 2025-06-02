@@ -110,20 +110,25 @@ class AppTheme {
       color: Colors.black,
       thickness: 1,
     ),
+
+    // Updated ElevatedButtonTheme for light theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFFDEFFF2),
-          foregroundColor: Color(0XFF464F51),
-          elevation: 0,
-          padding: EdgeInsets.symmetric(horizontal: 36, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(
-              fontFamily: "Primary", fontSize: 16, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFFDEFFF2), // Scaffold background color
+        foregroundColor: const Color(0XFF464F51), // Keep text/icon color
+        elevation: 0, // No elevation
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: const TextStyle(
+          fontFamily: "Primary",
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     ),
 
-    // Added FloatingActionButtonThemeData for lightTheme
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: const Color(0XFF464F51),
       foregroundColor: const Color(0xFFDEFFF2),
@@ -171,26 +176,25 @@ class AppTheme {
           fontWeight: FontWeight.bold),
       bodySmall: TextStyle(color: Colors.white, fontFamily: "Texxt"),
     ),
-
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.grey.shade900, // Dark grey fill for better contrast
+      fillColor: Colors.grey.shade900,
       contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      prefixIconColor: Colors.yellow.shade700, // softer yellow
+      prefixIconColor: Colors.yellow.shade700,
       suffixIconColor: Colors.yellow.shade700,
       hintStyle: TextStyle(
-        color: Colors.grey.shade400, // softer grey hint
+        color: Colors.grey.shade400,
         fontFamily: "Secondary",
         fontSize: 16,
         fontWeight: FontWeight.normal,
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade800), // subtle border
+        borderSide: BorderSide(color: Colors.grey.shade800),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade800), // subtle border
+        borderSide: BorderSide(color: Colors.grey.shade800),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -205,14 +209,12 @@ class AppTheme {
         borderSide: BorderSide(color: Colors.red.shade700, width: 2),
       ),
     ),
-
     colorScheme: const ColorScheme.dark(
       primary: Colors.yellow,
       onPrimary: Colors.black,
       background: Colors.black,
       onBackground: Colors.white,
     ),
-
     tabBarTheme: TabBarTheme(
       labelColor: Colors.yellow,
       unselectedLabelColor: Colors.white,
@@ -233,7 +235,6 @@ class AppTheme {
         ),
       ),
     ),
-
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       selectedItemColor: Colors.yellow.withOpacity(0.9),
       unselectedItemColor: Colors.white,
@@ -247,30 +248,33 @@ class AppTheme {
         fontWeight: FontWeight.bold,
       ),
     ),
-
     drawerTheme: const DrawerThemeData(
       backgroundColor: Colors.black,
       elevation: 0,
     ),
-
     dividerTheme: const DividerThemeData(
       color: Colors.white,
       thickness: 1,
     ),
+
+    // Updated ElevatedButtonTheme for dark theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.yellow,
-          elevation: 0,
-          padding: EdgeInsets.symmetric(horizontal: 36, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(
-              fontFamily: "Primary", fontSize: 16, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.black, // Scaffold background color
+        foregroundColor: Colors.yellow, // Text/icon color
+        elevation: 0, // No elevation
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: const TextStyle(
+          fontFamily: "Primary",
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     ),
 
-    // Added FloatingActionButtonThemeData for darkTheme
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: Colors.yellow,
       foregroundColor: Colors.black,

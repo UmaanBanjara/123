@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:feed/notification/notificationscreen.dart';
@@ -9,7 +10,6 @@ import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 
 class Homescreen extends StatefulWidget {
-
   const Homescreen({Key? key}) : super(key: key);
 
   @override
@@ -77,6 +77,8 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
+        iconSize: 28, 
+        
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
@@ -112,7 +114,7 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
                   child: CircleAvatar(
                     radius: 28,
                     backgroundImage: userData?['profile_picture_url'] != null
-                        ? NetworkImage(userData!['profile_picture_url'])
+                        ? CachedNetworkImageProvider(userData!['profile_picture_url'])
                         : const AssetImage('assets/images/pngwing.com.png') as ImageProvider,
                   ),
                 ),
@@ -130,23 +132,43 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
                   child: Text(
                     userData?['username'] ?? 'Username',
                     style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: "Primary",
+                      fontFamily: "bOLD",
+                      fontSize: 25,
                     ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '@${userData?['username'] ?? 'username'}.feeduser',
-                  style: const TextStyle(fontSize: 15, color: Colors.grey),
+                  style: const TextStyle(
+                    fontFamily: "lIGHT",
+                    fontSize: 15,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.normal,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Text('${userData?['followers'] ?? 0} Followers', style: const TextStyle(fontSize: 15)),
+                    Text(
+                      '${userData?['followers'] ?? 0} Followers',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontFamily: "rEGULAR",
+                        color: Colors.grey,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    Text('${userData?['following'] ?? 0} Following', style: const TextStyle(fontSize: 15)),
+                    Text(
+                      '${userData?['following'] ?? 0} Following',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontFamily: "rEGULAR",
+                        color: Colors.grey,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -167,12 +189,12 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
 
   ListTile buildDrawerItem(IconData icon, String title, int? index, Color iconColor) {
     return ListTile(
-      leading: Icon(icon, color: iconColor, size: 30),
+      leading: Icon(icon, color: iconColor, size: 25),
       title: Text(
         title,
         style: const TextStyle(
-          fontFamily: "Primary",
-          fontSize: 30,
+          fontFamily: "bOLD",
+          fontSize: 20,
           fontWeight: FontWeight.normal,
         ),
       ),
@@ -208,7 +230,7 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
             child: CircleAvatar(
               radius: 16,
               backgroundImage: userData?['profile_picture_url'] != null
-                  ? NetworkImage(userData!['profile_picture_url'])
+                  ? CachedNetworkImageProvider(userData!['profile_picture_url'])
                   : const AssetImage("assets/images/pngwing.com.png") as ImageProvider,
             ),
           ),

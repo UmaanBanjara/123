@@ -30,7 +30,7 @@ class Feed extends StatelessWidget {
       builder: (context, theme) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.darkTheme,
+          theme: AppTheme.lightTheme,
           home:  SplashScreen(), // You can replace with SplashScreen
         );
       },
