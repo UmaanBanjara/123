@@ -159,7 +159,7 @@
         lastName: user.last_name,
       };
 
-      const token = jwt.sign(payload, process.env.JWT_secret, { expiresIn: '1h' });
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
       return res.status(201).json({ message: 'User created', token, user, create_at: user.create_at , profile_completed : user.profile_completed});
     } catch (err) {
@@ -199,7 +199,7 @@
         lastname: user.last_name,
       };
 
-      const token = jwt.sign(payload, process.env.JWT_secret, { expiresIn: '1h' });
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
       return res.status(200).json({
         message: 'Login successful',

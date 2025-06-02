@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:feed/core/common/custom_textfield.dart';
-import 'package:page_transition/page_transition.dart';
 
 class EditPage extends StatefulWidget {
   const EditPage({super.key});
@@ -28,7 +27,6 @@ class _EditPageState extends State<EditPage> {
   File? pfpImage;
   File? bannerImage;
 
-  // For showing existing profile images before edit
   String? pfpNetworkUrl;
   String? bannerNetworkUrl;
 
@@ -83,7 +81,7 @@ class _EditPageState extends State<EditPage> {
       return;
     }
 
-    final url = Uri.parse('http://192.168.1.5:3000/getuserdetail'); // Use your actual endpoint
+    final url = Uri.parse('http://192.168.1.5:3000/getuserdetail');
 
     try {
       final response = await http.get(
@@ -95,8 +93,6 @@ class _EditPageState extends State<EditPage> {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-
-        // IMPORTANT FIX: Access nested 'user' object inside JSON response
         final data = decoded['user'];
 
         setState(() {
@@ -330,7 +326,6 @@ class _EditPageState extends State<EditPage> {
                                   if (_formKey.currentState!.validate()) {
                                     setState(() => isLoading = true);
 
-                                    // Upload images first
                                     Map<String, dynamic>? uploadResult = await updateImage();
 
                                     if (uploadResult == null) {
@@ -338,26 +333,16 @@ class _EditPageState extends State<EditPage> {
                                       return;
                                     }
 
-                                    // Extract URLs or fallback to previous URLs
                                     String? profilePictureUrl =
                                         uploadResult['profile_picture_url'] ?? pfpNetworkUrl;
                                     String? bannerPictureUrl = uploadResult['banner_url'] ?? bannerNetworkUrl;
 
-                                    // Update profile
                                     bool success = await createProfile(profilePictureUrl, bannerPictureUrl);
 
                                     setState(() => isLoading = false);
 
                                     if (success) {
-                                      Navigator.pop(
-                                        context,
-                                        PageTransition(
-                                          type: PageTransitionType.fade,
-                                          duration: const Duration(milliseconds: 300),
-                                          reverseDuration: const Duration(milliseconds: 300),
-                                          child: const UserProfile(),
-                                        ),
-                                      );
+                                      Navigator.pop(context);  // Just go back
                                     }
                                   }
                                 },
