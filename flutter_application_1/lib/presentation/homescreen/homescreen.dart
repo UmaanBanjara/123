@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:feed/tabbars/following_tabview.dart';
 import 'package:feed/tabbars/foryou_tabview.dart';
+import 'package:feed/userposts/userposts.dart';
 import 'package:flutter/material.dart';
 import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:feed/notification/notificationscreen.dart';
@@ -88,6 +89,15 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
           BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'),
         ],
       ),
+      floatingActionButton: FloatingActionButton(onPressed: (){
+
+        Navigator.push(context, PageTransition(type: PageTransitionType.fade ,
+        duration: Duration(milliseconds: 300),
+        reverseDuration: Duration(milliseconds: 300) ,
+        child: Posts()
+        ));
+      } ,
+      child: Icon(Icons.add),),
     );
   }
 
