@@ -1,17 +1,19 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class ForyouTabview extends StatefulWidget {
-  const ForyouTabview({super.key});
+class PostsTabbar extends StatefulWidget {
+   PostsTabbar({super.key});
 
   @override
-  State<ForyouTabview> createState() => _ForyouTabviewState();
+  State<PostsTabbar> createState() => _PostsTabbarState();
 }
 
-class _ForyouTabviewState extends State<ForyouTabview> {
+class _PostsTabbarState extends State<PostsTabbar> {
   @override
   Widget build(BuildContext context) {
-     String truncateUsername (String username , {int maxChars = 3}){
+
+    String truncateUsername (String username , {int maxChars = 3}){
       if(username.length <= maxChars){
         return username;
       }
@@ -62,7 +64,7 @@ class _ForyouTabviewState extends State<ForyouTabview> {
               ),
                             const SizedBox(width: 12),
 
-              Icon(Icons.more_vert, size: 13, ),
+              Icon(Icons.more_vert, size: 13),
             ],
           ),
 
@@ -105,5 +107,3 @@ class _ForyouTabviewState extends State<ForyouTabview> {
     );
   }
 }
-
-  

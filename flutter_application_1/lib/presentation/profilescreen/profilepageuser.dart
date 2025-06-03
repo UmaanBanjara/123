@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:feed/editpage/editpage.dart';
 import 'package:feed/presentation/homescreen/homescreen.dart';
+import 'package:feed/tabbars/posts_tabbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -302,7 +303,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                   body: TabBarView(
                     controller: _tabController,
                     children: [
-                      Center(child: Text('Posts content')),
+                      PostsTabbar(),
                       Center(child: Text('Replies content')),
                       Center(child: Text('Likes content')),
                       Center(child: Text('Media content')),

@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:feed/tabbars/following_tabview.dart';
+import 'package:feed/tabbars/foryou_tabview.dart';
 import 'package:flutter/material.dart';
 import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:feed/notification/notificationscreen.dart';
@@ -246,8 +248,8 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
       body: TabBarView(
         controller: tabController,
         children: const [
-          Center(child: Text('Content for For You tab')),
-          Center(child: Text('Content for Following tab')),
+          ForyouTabview(),
+          FollowingTabview()
         ],
       ),
     );
