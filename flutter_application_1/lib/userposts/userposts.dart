@@ -1,13 +1,16 @@
 import 'dart:io';
 
 import 'package:feed/core/common/custom_textfield.dart';
+import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/gifs/userchoosengifs.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 
 class Posts extends StatefulWidget {
@@ -18,6 +21,8 @@ class Posts extends StatefulWidget {
 }
 
 class _PostsState extends State<Posts> {
+
+  String? _locationtext ; 
   final List<String> _gifUrls = [];
 
   final TextEditingController postcontroller = TextEditingController();
@@ -37,6 +42,40 @@ class _PostsState extends State<Posts> {
     setState(() {
       _videoControllers[file.path] = controller;
     });
+  }
+
+  Future<void> _handlelocationpermission() async{
+    var status = await Permission.location.status ;
+
+    if(!status.isGranted){
+      status = await Permission.location.request() ;
+    }
+
+    if(status.isGranted){
+      await _getcurrentlocation();
+    }
+
+    else{
+      errorNotice(context, 'Location Permission Denied');
+    }
+  }
+
+  Future<void> _getcurrentlocation() async{
+    try{
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high
+      );
+
+      setState(() {
+        _locationtext = 'Lat : ${position.latitude.toStringAsFixed(5)},''Lng : ${position.longitude.toStringAsFixed(5)}';
+      });
+
+
+    }
+
+    catch(e){
+      errorNotice(context, 'Error getting Location ${e}');
+    }
   }
 
   Future<void> pickMedia() async {
@@ -335,7 +374,7 @@ class _PostsState extends State<Posts> {
               ),
               IconButton(
                 onPressed: () {
-                  // Add location functionality here
+                  _handlelocationpermission();
                 },
                 icon: const Icon(Icons.location_on, size: 30),
               ),
