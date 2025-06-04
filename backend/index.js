@@ -319,9 +319,59 @@
     }
   });
 
+app.post('/tweets', authenticationtoken, upload.array('mediafiles', 5), async (req, res) => {
+  const userId = req.user.userId;
+  const { content, location } = req.body;
+  const files = req.files;
 
+  // Function to upload a file buffer to Cloudinary
+  const uploadToCloudinary = (fileBuffer, folder) => {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result.secure_url);  // or result.url
+        }
+      );
+      streamifier.createReadStream(fileBuffer).pipe(stream);
+    });
+  };
+
+  try {
+    // Upload each file to Cloudinary and collect URLs
+    const mediaUrls = [];
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const url = await uploadToCloudinary(file.buffer, 'tweets_media');
+        mediaUrls.push(url);
+      }
+    }
+
+    // Now insert the tweet into DB
+    // Store mediaUrls as JSON string
+    const insertTweet = await pool.query(
+      `INSERT INTO tweets (user_id, content, location, media_urls, created_at)
+       VALUES ($1, $2, $3, $4, NOW()) RETURNING *`,
+      [userId, content, location, JSON.stringify(mediaUrls)]
+    );
+
+    res.status(201).json({
+      message: 'Tweet created successfully',
+      tweet: insertTweet.rows[0],
+    });
+  } catch (error) {
+    console.error('Tweet upload error:', error);
+    res.status(500).json({ error: 'Failed to create tweet', details: error.message });
+  }
+});
+
+  
 
   // Start server on all network interfaces
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
-  });
+
+
+    }
+  );

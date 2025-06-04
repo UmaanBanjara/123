@@ -5,9 +5,11 @@ import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/gifs/userchoosengifs.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
@@ -24,6 +26,7 @@ class Posts extends StatefulWidget {
 }
 
 class _PostsState extends State<Posts> {
+  final storage = FlutterSecureStorage();
   Position? _currentPosition;
   String? _locationText;
   LatLng? _userLatLng;
@@ -33,6 +36,42 @@ class _PostsState extends State<Posts> {
   final List<XFile> _mediaFiles = [];
   final ImagePicker _picker = ImagePicker();
   final Map<String, VideoPlayerController> _videoControllers = {};
+
+  Future<void> storeindb() async {
+    final token = await storage.read(key: 'jwt_token');
+    final url = Uri.parse('http://192.168.1.5:3000/tweets');
+
+    var request = http.MultipartRequest('POST', url);
+    request.headers['Authorization'] = 'Bearer $token';
+    
+    request.fields['content'] = postController.text;
+    request.fields['location'] = _locationText ?? '';
+
+    int maxfiles = 5;
+    for (int i = 0; i < _mediaFiles.length && i < maxfiles; i++) {
+      var file = _mediaFiles[i];
+      var fileBytes = await File(file.path).readAsBytes();
+      var multipartFile = http.MultipartFile.fromBytes(
+        'mediafiles',
+        fileBytes,
+        filename: file.name ?? 'file',
+      );
+      request.files.add(multipartFile);
+    }
+
+    try {
+      final response = await request.send();
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Success handling
+        print('Post uploaded successfully');
+      } else {
+        // Error handling
+        print('Failed to upload post. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error uploading post: $e');
+    }
+  }
 
   Future<void> _initializeVideoController(XFile file) async {
     final controller = VideoPlayerController.file(File(file.path));
