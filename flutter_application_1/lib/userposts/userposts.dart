@@ -6,9 +6,12 @@ import 'package:feed/gifs/userchoosengifs.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart';  // <--- add this import
 import 'package:page_transition/page_transition.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
@@ -21,19 +24,18 @@ class Posts extends StatefulWidget {
 }
 
 class _PostsState extends State<Posts> {
+  Position? _currentPosition;
+  String? _locationText;
+  LatLng? _userLatLng;
 
-  String? _locationtext ; 
   final List<String> _gifUrls = [];
-
-  final TextEditingController postcontroller = TextEditingController();
+  final TextEditingController postController = TextEditingController();
   final List<XFile> _mediaFiles = [];
   final ImagePicker _picker = ImagePicker();
-
   final Map<String, VideoPlayerController> _videoControllers = {};
 
-  Future<void> _initializevidcontroller(XFile file) async {
+  Future<void> _initializeVideoController(XFile file) async {
     final controller = VideoPlayerController.file(File(file.path));
-
     await controller.initialize();
     controller.setLooping(true);
     controller.setVolume(0);
@@ -44,37 +46,41 @@ class _PostsState extends State<Posts> {
     });
   }
 
-  Future<void> _handlelocationpermission() async{
-    var status = await Permission.location.status ;
+  Future<void> _handleLocationPermission() async {
+    var status = await Permission.location.status;
 
-    if(!status.isGranted){
-      status = await Permission.location.request() ;
+    if (!status.isGranted) {
+      status = await Permission.location.request();
     }
 
-    if(status.isGranted){
-      await _getcurrentlocation();
-    }
-
-    else{
+    if (status.isGranted) {
+      await _getCurrentLocation();
+    } else {
       errorNotice(context, 'Location Permission Denied');
     }
   }
 
-  Future<void> _getcurrentlocation() async{
-    try{
+  Future<void> _getCurrentLocation() async {
+    try {
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high
+        desiredAccuracy: LocationAccuracy.high,
       );
 
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      final placemark = placemarks.first;
+      final locationName = '${placemark.locality}, ${placemark.administrativeArea}';
+
       setState(() {
-        _locationtext = 'Lat : ${position.latitude.toStringAsFixed(5)},''Lng : ${position.longitude.toStringAsFixed(5)}';
+        _currentPosition = position;
+        _locationText = locationName;
+        _userLatLng = LatLng(position.latitude, position.longitude);
       });
-
-
-    }
-
-    catch(e){
-      errorNotice(context, 'Error getting Location ${e}');
+    } catch (e) {
+      errorNotice(context, 'Error getting Location $e');
     }
   }
 
@@ -97,7 +103,7 @@ class _PostsState extends State<Posts> {
         if (file.path.toLowerCase().endsWith('.mp4') ||
             file.path.toLowerCase().endsWith('.mov') ||
             file.path.toLowerCase().endsWith('.avi')) {
-          await _initializevidcontroller(file);
+          await _initializeVideoController(file);
         }
       }
     }
@@ -184,7 +190,7 @@ class _PostsState extends State<Posts> {
     for (var controller in _videoControllers.values) {
       controller.dispose();
     }
-    postcontroller.dispose();
+    postController.dispose();
     super.dispose();
   }
 
@@ -214,7 +220,7 @@ class _PostsState extends State<Posts> {
           Padding(
             padding: const EdgeInsets.all(8),
             child: Customtextfile(
-              controller: postcontroller,
+              controller: postController,
               obscureText: false,
               minlines: 1,
               maxlines: 15,
@@ -289,15 +295,11 @@ class _PostsState extends State<Posts> {
                         borderRadius: BorderRadius.circular(8),
                         child: isVideo
                             ? (_videoControllers[file.path] != null &&
-                                    _videoControllers[file.path]!
-                                        .value
-                                        .isInitialized)
+                                    _videoControllers[file.path]!.value.isInitialized)
                                 ? AspectRatio(
-                                    aspectRatio: _videoControllers[file.path]!
-                                        .value
-                                        .aspectRatio,
-                                    child: VideoPlayer(
-                                        _videoControllers[file.path]!),
+                                    aspectRatio:
+                                        _videoControllers[file.path]!.value.aspectRatio,
+                                    child: VideoPlayer(_videoControllers[file.path]!),
                                   )
                                 : Container(
                                     height: 150,
@@ -318,10 +320,8 @@ class _PostsState extends State<Posts> {
                           onTap: () {
                             setState(() {
                               final removedFile = _mediaFiles.removeAt(index);
-                              if (_videoControllers
-                                  .containsKey(removedFile.path)) {
-                                _videoControllers[removedFile.path]!
-                                    .dispose();
+                              if (_videoControllers.containsKey(removedFile.path)) {
+                                _videoControllers[removedFile.path]!.dispose();
                                 _videoControllers.remove(removedFile.path);
                               }
                             });
@@ -345,6 +345,54 @@ class _PostsState extends State<Posts> {
               ),
             ),
           ),
+
+          // ** New Map and Location Info Section **
+          if (_userLatLng != null)
+            Column(
+              children: [
+                SizedBox(
+                  height: 150,
+                  width: double.infinity,
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: _userLatLng!,
+                      initialZoom: 13,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        subdomains: ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.app',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            width: 80,
+                            height: 80,
+                            point: _userLatLng!,
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.red,
+                              size: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _locationText ?? '',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -354,7 +402,7 @@ class _PostsState extends State<Posts> {
               ),
               IconButton(
                 onPressed: () async {
-                  final selectedgif = await Navigator.push<String>(
+                  final selectedGif = await Navigator.push<String>(
                     context,
                     PageTransition(
                       type: PageTransitionType.fade,
@@ -364,9 +412,9 @@ class _PostsState extends State<Posts> {
                     ),
                   );
 
-                  if (selectedgif != null && selectedgif.isNotEmpty) {
+                  if (selectedGif != null && selectedGif.isNotEmpty) {
                     setState(() {
-                      _gifUrls.add(selectedgif);
+                      _gifUrls.add(selectedGif);
                     });
                   }
                 },
@@ -374,12 +422,13 @@ class _PostsState extends State<Posts> {
               ),
               IconButton(
                 onPressed: () {
-                  _handlelocationpermission();
+                  _handleLocationPermission();
                 },
                 icon: const Icon(Icons.location_on, size: 30),
               ),
             ],
           ),
+          const SizedBox(height: 8),
         ],
       ),
     );
