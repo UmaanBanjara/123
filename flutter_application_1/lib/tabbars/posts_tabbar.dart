@@ -36,7 +36,7 @@ class _PostsTabbarState extends State<PostsTabbar> {
         child: ListTile(
           // Profile avatar
           leading: CircleAvatar(
-            backgroundImage: ExactAssetImage('images/profile.jpg'),
+            backgroundImage: ExactAssetImage('assets/images/pngwing.com.png'),
             radius: 20,
           ),
 

@@ -34,7 +34,7 @@ class _FollowingTabviewState extends State<FollowingTabview> {
         child: ListTile(
           // Profile avatar
           leading: CircleAvatar(
-            backgroundImage: ExactAssetImage('images/profile.jpg'),
+            backgroundImage: ExactAssetImage('assets/images/pngwing.com.png'),
             radius: 20,
           ),
 

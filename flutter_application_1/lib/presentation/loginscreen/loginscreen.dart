@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:another_flushbar/flushbar.dart';
 import 'package:feed/core/common/custom_images.dart';
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:feed/core/utils/error_notice.dart';
@@ -11,8 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

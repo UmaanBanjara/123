@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:feed/core/common/custom_textfield.dart';
+import 'package:feed/gifs/userchoosengifs.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:page_transition/page_transition.dart';
 import 'package:video_player/video_player.dart';
 
 class Posts extends StatefulWidget {
@@ -16,13 +18,14 @@ class Posts extends StatefulWidget {
 }
 
 class _PostsState extends State<Posts> {
+  final List<String> _gifUrls = [];
+
   final TextEditingController postcontroller = TextEditingController();
   final List<XFile> _mediaFiles = [];
   final ImagePicker _picker = ImagePicker();
 
   final Map<String, VideoPlayerController> _videoControllers = {};
 
-  // Initialize video controller for a video file
   Future<void> _initializevidcontroller(XFile file) async {
     final controller = VideoPlayerController.file(File(file.path));
 
@@ -36,7 +39,6 @@ class _PostsState extends State<Posts> {
     });
   }
 
-  // Pick multiple images & videos from gallery
   Future<void> pickMedia() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -52,7 +54,6 @@ class _PostsState extends State<Posts> {
         _mediaFiles.addAll(selectedFiles);
       });
 
-      // Initialize video controllers for video files
       for (var file in selectedFiles) {
         if (file.path.toLowerCase().endsWith('.mp4') ||
             file.path.toLowerCase().endsWith('.mov') ||
@@ -63,7 +64,6 @@ class _PostsState extends State<Posts> {
     }
   }
 
-  // Pick photo from camera and crop it (optional)
   Future<void> pickFromCamera() async {
     final XFile? picked = await _picker.pickImage(source: ImageSource.camera);
     if (picked != null) {
@@ -75,12 +75,11 @@ class _PostsState extends State<Posts> {
     }
   }
 
-  // Show dialog to select media source
   Future<void> showMediaSourceDialog() async {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
+        title: const Text(
           'Add Media',
           style: TextStyle(fontSize: 20, fontFamily: "rEGULAR"),
         ),
@@ -115,7 +114,6 @@ class _PostsState extends State<Posts> {
     );
   }
 
-  // Crop image (for camera capture)
   Future<File?> cropImage(File imageFile, {required bool isPfp}) async {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
@@ -144,7 +142,6 @@ class _PostsState extends State<Posts> {
 
   @override
   void dispose() {
-    // Dispose all video controllers
     for (var controller in _videoControllers.values) {
       controller.dispose();
     }
@@ -173,7 +170,6 @@ class _PostsState extends State<Posts> {
         ],
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           const SizedBox(height: 20),
           Padding(
@@ -189,6 +185,51 @@ class _PostsState extends State<Posts> {
               textStyle: const TextStyle(fontSize: 14, fontFamily: "rEGULAR"),
             ),
           ),
+          if (_gifUrls.isNotEmpty)
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: _gifUrls.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) => Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _gifUrls[index],
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _gifUrls.removeAt(index);
+                          });
+                        },
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -247,7 +288,7 @@ class _PostsState extends State<Posts> {
                             });
                           },
                           child: Container(
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.black54,
                               shape: BoxShape.circle,
                             ),
@@ -264,7 +305,7 @@ class _PostsState extends State<Posts> {
                 },
               ),
             ),
-          ), // pushes buttons to bottom
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -273,11 +314,29 @@ class _PostsState extends State<Posts> {
                 icon: const Icon(Icons.photo_library, size: 30),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () async {
+                  final selectedgif = await Navigator.push<String>(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      duration: const Duration(milliseconds: 300),
+                      reverseDuration: const Duration(milliseconds: 300),
+                      child: const Userchoosengifs(),
+                    ),
+                  );
+
+                  if (selectedgif != null && selectedgif.isNotEmpty) {
+                    setState(() {
+                      _gifUrls.add(selectedgif);
+                    });
+                  }
+                },
                 icon: const Icon(Icons.gif, size: 30),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  // Add location functionality here
+                },
                 icon: const Icon(Icons.location_on, size: 30),
               ),
             ],

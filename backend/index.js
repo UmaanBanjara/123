@@ -9,6 +9,7 @@
   const cloudinary = require('./cloudinary/cloudinary');
   const multer = require('multer');
   const streamifier = require('streamifier');
+  const router = require('./tenor/tenor');
   /*const forgotPassword = require('./forgotpass/forgotpass');
   const getResetPass = require('./forgotpass/getresetpass');
   const postResetPass = require('./forgotpass/postresetpass');*/
@@ -31,6 +32,7 @@
   const PORT = 3000;
 
   app.use(express.json());
+  app.use('/search' , router)
 
   // Setup nodemailer transporter with Gmail
   const transporter = nodemailer.createTransport({
