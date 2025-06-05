@@ -5,7 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'config/theme/myapptheme.dart';
-import 'presentation/choosemodescreen/choosemodescreen.dart';
 import 'presentation/loginscreen/loginscreen.dart';
 import 'presentation/homescreen/homescreen.dart';
 

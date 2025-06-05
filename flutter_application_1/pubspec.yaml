@@ -38,12 +38,12 @@ dependencies:
   flutter_map: ^8.1.1
   latlong2: ^0.9.1
   mime: ^2.0.0
+  video_compress: ^3.1.4
+
 dev_dependencies:
-  flutter_test: 
+  flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-
-
 
 flutter:
   uses-material-design: true
@@ -53,7 +53,7 @@ flutter:
     - assets/images/moon.png
     - assets/images/sun.png
     - assets/images/righthand.png
-    - assets/images/login.png 
+    - assets/images/login.png
     - assets/images/signup.png
     - assets/images/googlelight.png
     - assets/images/googledark.png

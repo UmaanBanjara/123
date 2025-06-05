@@ -1,4 +1,6 @@
+import 'dart:core';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:feed/core/utils/error_notice.dart';
@@ -13,9 +15,10 @@ import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_map/flutter_map.dart';  // <--- add this import
+import 'package:flutter_map/flutter_map.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 
 class Posts extends StatefulWidget {
@@ -37,26 +40,77 @@ class _PostsState extends State<Posts> {
   final ImagePicker _picker = ImagePicker();
   final Map<String, VideoPlayerController> _videoControllers = {};
 
+  // Removed compressImage method entirely
+
+  // Helper method to compress videos
+  Future<File?> compressVideo(File file) async {
+    final info = await VideoCompress.compressVideo(
+      file.path,
+      quality: VideoQuality.MediumQuality,
+      deleteOrigin: false,
+    );
+    return info?.file;
+  }
+
   Future<void> storeindb() async {
     final token = await storage.read(key: 'jwt_token');
     final url = Uri.parse('http://192.168.1.5:3000/tweets');
 
     var request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $token';
-    
+
     request.fields['content'] = postController.text;
     request.fields['location'] = _locationText ?? '';
 
     int maxfiles = 5;
     for (int i = 0; i < _mediaFiles.length && i < maxfiles; i++) {
       var file = _mediaFiles[i];
-      var fileBytes = await File(file.path).readAsBytes();
-      var multipartFile = http.MultipartFile.fromBytes(
-        'mediafiles',
-        fileBytes,
-        filename: file.name ?? 'file',
-      );
-      request.files.add(multipartFile);
+      final lowerPath = file.path.toLowerCase();
+
+      if (lowerPath.endsWith('.jpg') ||
+          lowerPath.endsWith('.jpeg') ||
+          lowerPath.endsWith('.png')) {
+        // No image compression — upload original image bytes
+        var fileBytes = await File(file.path).readAsBytes();
+        var multipartFile = http.MultipartFile.fromBytes(
+          'mediafiles',
+          fileBytes,
+          filename: file.name ?? 'image.jpg',
+        );
+        request.files.add(multipartFile);
+      } else if (lowerPath.endsWith('.mp4') ||
+          lowerPath.endsWith('.mov') ||
+          lowerPath.endsWith('.avi')) {
+        // Compress video and add compressed file
+        File? compressedVideoFile = await compressVideo(File(file.path));
+        if (compressedVideoFile != null) {
+          var fileBytes = await compressedVideoFile.readAsBytes();
+          var multipartFile = http.MultipartFile.fromBytes(
+            'mediafiles',
+            fileBytes,
+            filename: file.name ?? 'video.mp4',
+          );
+          request.files.add(multipartFile);
+        } else {
+          // fallback to original file bytes if compression failed
+          var fileBytes = await File(file.path).readAsBytes();
+          var multipartFile = http.MultipartFile.fromBytes(
+            'mediafiles',
+            fileBytes,
+            filename: file.name ?? 'video.mp4',
+          );
+          request.files.add(multipartFile);
+        }
+      } else {
+        // For other file types (if any), just upload original bytes
+        var fileBytes = await File(file.path).readAsBytes();
+        var multipartFile = http.MultipartFile.fromBytes(
+          'mediafiles',
+          fileBytes,
+          filename: file.name ?? 'file',
+        );
+        request.files.add(multipartFile);
+      }
     }
 
     try {
@@ -243,14 +297,19 @@ class _PostsState extends State<Posts> {
           },
           icon: const Icon(Icons.close, size: 30),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 15),
-            child: Text(
-              'Post',
-              style: TextStyle(fontSize: 20, fontFamily: "bOLD"),
+            padding: const EdgeInsets.only(right: 15),
+            child: TextButton(
+              onPressed: () async {
+                await storeindb();
+              },
+              child: const Text(
+                'Post',
+                style: TextStyle(fontSize: 20, fontFamily: "bOLD"),
+              ),
             ),
-          )
+          ),
         ],
       ),
       body: Column(
@@ -385,7 +444,7 @@ class _PostsState extends State<Posts> {
             ),
           ),
 
-          // ** New Map and Location Info Section **
+          // New Map and Location Info Section
           if (_userLatLng != null)
             Column(
               children: [
