@@ -1,4 +1,3 @@
-
 const os = require('os');
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -18,10 +17,10 @@ const upload = multer({ storage });
 const homeDir = os.homedir();
 const app = express();
 
-
 app.use('/uploads/pfp', express.static(path.join(homeDir, 'uploaded_pfp_by_user')));
 app.use('/uploads/banner', express.static(path.join(homeDir, 'uploaded_banner_by_user')));
-
+app.use('/uploads/images', express.static(path.join(homeDir, 'uploaded_images_by_user')));
+app.use('/uploads/videos', express.static(path.join(homeDir, 'uploaded_vids_by_user')));
 
 const PORT = 3000;
 
@@ -42,8 +41,11 @@ app.post('/signup', async (req, res) => {
   try {
     const { first_name, last_name, email, password } = req.body;
 
+    console.log('[Signup] Received signup request for email:', email);
+
     const usercheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (usercheck.rows.length > 0) {
+      console.log('[Signup] User already exists:', email);
       return res.status(400).json({ error: 'User already exists with that email' });
     }
 
@@ -55,6 +57,7 @@ app.post('/signup', async (req, res) => {
       [first_name, last_name, email, hashedPassword, verificationToken, false]
     );
 
+    // Use your actual domain or IP, consider making this configurable
     const verificationLink = `http://192.168.1.5:${PORT}/verify-email?token=${verificationToken}`;
 
     const mailOptions = {
@@ -70,12 +73,14 @@ app.post('/signup', async (req, res) => {
 
     await transporter.sendMail(mailOptions);
 
+    console.log('[Signup] User created and verification email sent:', email);
+
     return res.status(201).json({
       message: 'User created successfully. Please verify your email.',
       user: newuser.rows[0],
     });
   } catch (err) {
-    console.error(err.message);
+    console.error('[Signup] Error:', err.message);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
@@ -85,8 +90,11 @@ app.get('/verify-email', async (req, res) => {
   try {
     const { token } = req.query;
 
+    console.log('[Verify Email] Token received:', token);
+
     const userResult = await pool.query('SELECT * FROM users WHERE verification_token = $1', [token]);
     if (userResult.rows.length === 0) {
+      console.log('[Verify Email] Invalid token:', token);
       return res.status(400).send('Invalid verification token');
     }
 
@@ -95,9 +103,11 @@ app.get('/verify-email', async (req, res) => {
       [true, null, token]
     );
 
+    console.log('[Verify Email] Email verified for token:', token);
+
     res.send('Email verified successfully. You can now log in.');
   } catch (err) {
-    console.error(err.message);
+    console.error('[Verify Email] Error:', err.message);
     res.status(500).send('Server error');
   }
 });
@@ -107,6 +117,8 @@ app.post('/google_signin', async (req, res) => {
   try {
     const { first_name, last_name, email, google_id } = req.body;
 
+    console.log('[Google Signin] Attempt:', email, google_id);
+
     if (!google_id || !email) {
       return res.status(400).json({ error: 'Missing google_id or email' });
     }
@@ -114,12 +126,14 @@ app.post('/google_signin', async (req, res) => {
     const userbygoogleid = await pool.query('SELECT * FROM users WHERE google_id = $1', [google_id]);
 
     if (userbygoogleid.rows.length > 0) {
+      console.log('[Google Signin] User found by google_id:', google_id);
       return res.status(200).json({ message: 'Login successful', user: userbygoogleid.rows[0] });
     }
 
     const userByEmail = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
     if (userByEmail.rows.length > 0) {
+      console.log('[Google Signin] Email exists but google_id not linked:', email);
       return res.status(400).json({
         error: 'User already exists with this email. Please login using email and password.',
       });
@@ -141,9 +155,11 @@ app.post('/google_signin', async (req, res) => {
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+    console.log('[Google Signin] New user created:', email);
+
     return res.status(201).json({ message: 'User created', token, user });
   } catch (err) {
-    console.error('Google signin error:', err.message);
+    console.error('[Google Signin] Error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -153,19 +169,24 @@ app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('[Login] Attempt for email:', email);
+
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userResult.rows.length === 0) {
+      console.log('[Login] No user found:', email);
       return res.status(400).json({ error: 'Invalid email or password' });
     }
 
     const user = userResult.rows[0];
 
     if (!user.verified) {
+      console.log('[Login] User email not verified:', email);
       return res.status(403).json({ error: 'Please verify your email before logging in' });
     }
 
     const ispassvalid = await bcrypt.compare(password, user.password_hash);
     if (!ispassvalid) {
+      console.log('[Login] Invalid password attempt for:', email);
       return res.status(400).json({ error: 'Invalid email or password' });
     }
 
@@ -173,10 +194,12 @@ app.post('/login', async (req, res) => {
       userId: user.id,
       email: user.email,
       firstName: user.first_name,
-      lastname: user.last_name,
+      lastName: user.last_name,
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    console.log('[Login] Successful login:', email);
 
     return res.status(200).json({
       message: 'Login successful',
@@ -191,7 +214,7 @@ app.post('/login', async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Login error:', err.message);
+    console.error('[Login] Error:', err.message);
     return res.status(500).json({ error: 'Server error' });
   }
 });
@@ -202,16 +225,21 @@ app.post('/profilecreation', authenticationtoken, async (req, res) => {
     const { username, profile_picture_url, banner_url, bio } = req.body;
     const userId = req.user.userId;
 
+    console.log('[Profile Creation] User ID:', userId, 'Username:', username);
+
     const usernamecheck = await pool.query('SELECT * FROM users WHERE username = $1 AND id != $2', [username, userId]);
 
     if (usernamecheck.rows.length > 0) {
+      console.log('[Profile Creation] Username already taken:', username);
       return res.status(400).json({ error: 'Username already taken, please choose another one' });
     }
 
     const updateprofile = await pool.query(
-      `UPDATE users SET username = $1, profile_picture_url = $2, banner_url = $3, profile_completed = $4, bio = $5 WHERE id = $6 RETURNING *`,
-      [username, profile_picture_url, banner_url, true, bio, userId]
+      `UPDATE users SET username = $1, profile_completed = $2, bio = $3 WHERE id = $4 RETURNING *`,
+      [username ,  true, bio, userId]
     );
+
+    console.log('[Profile Creation] Profile updated for user:', userId);
 
     return res.status(200).json({
       message: 'Profile updated successfully',
@@ -223,7 +251,7 @@ app.post('/profilecreation', authenticationtoken, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Profile creation error:', err.message);
+    console.error('[Profile Creation] Error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -238,35 +266,45 @@ app.post(
   ]),
   async (req, res) => {
     try {
+      console.log('[Upload Profile-Banner] Incoming request');
       const files = req.files;
       const userId = req.user.userId;
 
+      console.log('[Upload Profile-Banner] User ID:', userId);
+      console.log('[Upload Profile-Banner] Files received:', files);
+
       if (!files || (!files.profile_picture && !files.banner)) {
+        console.log('[Upload Profile-Banner] No files uploaded');
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
       const profilePictureFile = files.profile_picture ? files.profile_picture[0] : null;
       const bannerFile = files.banner ? files.banner[0] : null;
 
-      const profilePicturePath = profilePictureFile ? `/uploads/pfp/${profilePictureFile.filename}`  : null;
+      const profilePicturePath = profilePictureFile ? `/uploads/pfp/${profilePictureFile.filename}` : null;
       const bannerPath = bannerFile ? `/uploads/banner/${bannerFile.filename}` : null;
-      console.log('User ID:', userId);
-      console.log('Profile Picture Path:', profilePicturePath);
-      console.log('Banner Path:', bannerPath);
-const result = await pool.query(
-  'UPDATE users SET profile_picture_url = $1, banner_url = $2 WHERE id = $3',
-  [profilePicturePath, bannerPath, userId]
-);
 
-console.log('Update query result:', result);
+      console.log('[Upload Profile-Banner] Profile Picture Path:', profilePicturePath);
+      console.log('[Upload Profile-Banner] Banner Path:', bannerPath);
 
-      res.status(200).json({
-        message: 'Files uploaded successfully',
-        profile_picture_path: profilePicturePath,
-        banner_path: bannerPath,
+      // Update DB
+      const result = await pool.query(
+        `UPDATE users SET
+          profile_picture_url = COALESCE($1, profile_picture_url),
+          banner_url = COALESCE($2, banner_url)
+        WHERE id = $3 RETURNING profile_picture_url, banner_url`,
+        [profilePicturePath, bannerPath, userId]
+      );
+
+      console.log('[Upload Profile-Banner] DB update result:', result.rows[0]);
+
+      return res.status(200).json({
+        message: 'Upload successful',
+        profile_picture_url: result.rows[0].profile_picture_url,
+        banner_url: result.rows[0].banner_url,
       });
     } catch (err) {
-      console.error(err);
+      console.error('[Upload Profile-Banner] Error:', err);
       res.status(500).json({ error: 'Upload failed' });
     }
   }
@@ -278,6 +316,8 @@ app.post('/tweets/create', authenticationtoken, async (req, res) => {
     const userId = req.user.userId;
     const { content, location } = req.body;
 
+    console.log('[Create Tweet] User ID:', userId, 'Content:', content);
+
     const result = await pool.query(
       'INSERT INTO tweets (user_id, content, created_at, location) VALUES ($1, $2, NOW(), $3) RETURNING id',
       [userId, content, location]
@@ -285,7 +325,7 @@ app.post('/tweets/create', authenticationtoken, async (req, res) => {
 
     res.status(201).json({ message: 'Tweet created', tweetId: result.rows[0].id });
   } catch (err) {
-    console.error(err);
+    console.error('[Create Tweet] Error:', err);
     res.status(500).json({ error: 'Could not create tweet' });
   }
 });
@@ -301,16 +341,22 @@ app.post(
       const userId = req.user.userId;
       const { tweetId } = req.body;
 
+      console.log('[Upload Tweet Media] User ID:', userId, 'Tweet ID:', tweetId);
+      console.log('[Upload Tweet Media] Files:', files);
+
       if (!tweetId) {
+        console.log('[Upload Tweet Media] tweetId missing');
         return res.status(400).json({ error: 'tweetId is required' });
       }
 
       if (!files || files.length === 0) {
+        console.log('[Upload Tweet Media] No media files uploaded');
         return res.status(400).json({ error: 'No media files uploaded' });
       }
 
       const filePaths = files.map(file => file.path);
 
+      // Assuming media_url is a text array or JSON column
       await pool.query(
         'UPDATE tweets SET media_url = $1 WHERE id = $2',
         [filePaths, tweetId]
@@ -321,7 +367,7 @@ app.post(
         file_paths: filePaths,
       });
     } catch (err) {
-      console.error(err);
+      console.error('[Upload Tweet Media] Error:', err);
       res.status(500).json({ error: 'Upload failed' });
     }
   }
@@ -331,24 +377,28 @@ app.get('/getuserdetails', authenticationtoken, async (req, res) => {
   try {
     const userId = req.user.userId;
 
+    console.log('[Get User Details] User ID:', userId);
+
     const userResult = await pool.query(
       'SELECT username, bio, profile_picture_url, banner_url FROM users WHERE id = $1',
       [userId]
     );
 
     if (userResult.rows.length === 0) {
+      console.log('[Get User Details] User not found:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
 
     const userDetails = userResult.rows[0];
 
+    console.log('[Get User Details] Retrieved:', userDetails);
+
     return res.status(200).json({ userDetails });
   } catch (err) {
-    console.error('Get user details error:', err.message);
+    console.error('[Get User Details] Error:', err.message);
     return res.status(500).json({ error: 'Server error' });
   }
 });
-
 
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
