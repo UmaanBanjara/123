@@ -12,7 +12,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 
 class ProfileCreation extends StatefulWidget {
-
   const ProfileCreation({super.key});
 
   @override
@@ -20,8 +19,8 @@ class ProfileCreation extends StatefulWidget {
 }
 
 class _ProfileCreationState extends State<ProfileCreation> {
-  final _formKey = GlobalKey<FormState>();
   final storage = const FlutterSecureStorage();
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController bio = TextEditingController();
   final TextEditingController username = TextEditingController();
 
@@ -31,89 +30,101 @@ class _ProfileCreationState extends State<ProfileCreation> {
 
   bool isLoading = false;
 
-  // Upload profile picture and banner images to backend
-  Future<Map<String, dynamic>?> uploadFiles() async {
-    setState(() => isLoading = true);
-
-    final token = await storage.read(key: 'jwt_token');
-    if (token == null) {
-      setState(() => isLoading = false);
-      errorNotice(context, 'Not Authenticated');
-      return null;
-    }
-
-    // Fix: Add '//' after http: for valid URI
-    final uri = Uri.parse('http://192.168.1.5:3000/uploadfiles');
-    final request = http.MultipartRequest('POST', uri);
-    request.headers['Authorization'] = 'Bearer $token';
-
-    if (pfpImage != null) {
-      request.files.add(await http.MultipartFile.fromPath('profile_picture', pfpImage!.path));
-    }
-    if (bannerImage != null) {
-      request.files.add(await http.MultipartFile.fromPath('banner', bannerImage!.path));
+  // Upload profile picture and banner to backend
+  Future<void> pfpANDbanner() async {
+    if (pfpImage == null && bannerImage == null) {
+      errorNotice(context, "Please select at least one image.");
+      return;
     }
 
     try {
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      setState(() => isLoading = true);
+      final url = Uri.parse('http://192.168.1.5:3000/upload/profile-banner');
+      final token = await storage.read(key: 'jwt_token');
 
-      setState(() => isLoading = false);
+      if (token == null) {
+        errorNotice(context, "Invalid Token, Please Login Again");
+        setState(() => isLoading = false);
+        return;
+      }
+
+      var request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      if (pfpImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'profile_picture',
+          pfpImage!.path,
+        ));
+      }
+
+      if (bannerImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'banner',
+          bannerImage!.path,
+        ));
+      }
+
+      var response = await request.send();
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        // You can parse response if needed
+        final respStr = await response.stream.bytesToString();
+       errorNotice(context, "Upload Succesfull");
       } else {
-        errorNotice(context, 'Upload failed: ${response.statusCode}');
-        return null;
+        errorNotice(context, "Upload failed with status: ${response.statusCode}");
       }
     } catch (e) {
+      errorNotice(context, "An error occurred: $e");
+    } finally {
       setState(() => isLoading = false);
-      errorNotice(context, 'An error occurred: $e');
-      return null;
     }
   }
 
-  // Call backend to create profile with username and bio
-  Future<bool> createProfile(String? profilePictureUrl , String? bannerPictureUrl) async {
-  
-    final token = await storage.read(key : 'jwt_token');
+  //send username and bio to backend
+Future<void> sendUsernameAndBio() async {
+  if (!_formKey.currentState!.validate()) return;
 
+  try {
+    setState(() => isLoading = true);
     final url = Uri.parse('http://192.168.1.5:3000/profilecreation');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json' , 
-                  'Authorization' : 'Bearer $token'  ,                             
-                                                    
-                                                    },
-        body: jsonEncode({
-          'username': username.text.trim(),
-          'bio' : bio.text.trim(),
-          'profile_picture_url' : profilePictureUrl,
-          'banner_url' : bannerPictureUrl
+    final token = await storage.read(key: 'jwt_token');
 
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        errorNotice(context, "Profile Created Successfully");
-        return true;
-      } else {
-        errorNotice(context, data['error'] ?? "Profile Creation Failed. Please Try Again");
-        return false;
-      }
-    } catch (e) {
-      errorNotice(context, "Network Error. Please Try Again Later");
-      return false;
+    if (token == null) {
+      errorNotice(context, "Invalid Token, Please Login Again");
+      setState(() => isLoading = false);
+      return;
     }
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'username': username.text.trim(),
+        'bio': bio.text.trim(),
+      }),
+    );
+
+    if (response.statusCode == 200) {
+     errorNotice(context, "Profile info updated!");
+    } else {
+      errorNotice(context, "Update failed: ${response.statusCode}");
+    }
+  } catch (e) {
+    errorNotice(context, "An error occurred: $e");
+  } finally {
+    setState(() => isLoading = false);
   }
+}
 
   // Pick and crop profile picture image
   Future<void> pickPfp() async {
     final source = await _showImageSourceDialog();
     if (source != null) {
-      final XFile? picked = await _picker.pickImage(source: source);
+      final picked = await _picker.pickImage(source: source);
       if (picked != null) {
         File imageFile = File(picked.path);
         final cropped = await cropImage(imageFile, isPfp: true);
@@ -126,7 +137,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
   Future<void> pickBanner() async {
     final source = await _showImageSourceDialog();
     if (source != null) {
-      final XFile? picked = await _picker.pickImage(source: source);
+      final picked = await _picker.pickImage(source: source);
       if (picked != null) {
         File imageFile = File(picked.path);
         final cropped = await cropImage(imageFile, isPfp: false);
@@ -146,12 +157,18 @@ class _ProfileCreationState extends State<ProfileCreation> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: Text("Take a Photo", style: Theme.of(context).textTheme.bodySmall),
+              title: Text(
+                "Take a Photo",
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: Text("Choose from Gallery", style: Theme.of(context).textTheme.bodySmall),
+              title: Text(
+                "Choose from Gallery",
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -172,7 +189,8 @@ class _ProfileCreationState extends State<ProfileCreation> {
           toolbarTitle: 'Crop Image',
           toolbarColor: Theme.of(context).primaryColor,
           toolbarWidgetColor: Colors.white,
-          initAspectRatio: isPfp ? CropAspectRatioPreset.square : CropAspectRatioPreset.ratio16x9,
+          initAspectRatio:
+              isPfp ? CropAspectRatioPreset.square : CropAspectRatioPreset.ratio16x9,
           lockAspectRatio: true,
         ),
         IOSUiSettings(
@@ -266,7 +284,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
                     onTap: pickPfp,
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundColor : Theme.of(context).scaffoldBackgroundColor,
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                       child: ClipOval(
                         child: pfpImage != null
                             ? Image.file(pfpImage!, width: 100, height: 100, fit: BoxFit.cover)
@@ -320,27 +338,9 @@ class _ProfileCreationState extends State<ProfileCreation> {
                         : () async {
                             if (!_formKey.currentState!.validate()) return;
 
-                            final uploaded = await uploadFiles();
-
-                            if (uploaded != null) {
-                              final profilePictureUrl = uploaded['profile_picture_url'];
-                              final bannerUrl = uploaded['banner_url'];
-                              // Only create profile if upload succeeded
-                              final created = await createProfile(profilePictureUrl, bannerUrl);
-                              if (created) {
-                                // Navigate to home on success
-                                if (!mounted) return;
-                                Navigator.pushReplacement(
-                                  context,
-                                  PageTransition(
-                                    type: PageTransitionType.fade,
-                                    duration: const Duration(milliseconds: 300),
-                                    reverseDuration: const Duration(milliseconds: 300),
-                                    child: Homescreen(),
-                                  ),
-                                );
-                              }
-                            }
+                            // Call your upload method here
+                            await pfpANDbanner();
+                            await sendUsernameAndBio();
                           },
                     child: isLoading
                         ? const SizedBox(
@@ -348,7 +348,20 @@ class _ProfileCreationState extends State<ProfileCreation> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text('Create Account', style: Theme.of(context).textTheme.bodyMedium),
+                        : GestureDetector(
+                          
+                          onTap: (){
+                            Navigator.push(context, PageTransition(
+
+                              type : PageTransitionType.fade , 
+                              duration: Duration(milliseconds: 300),
+                              reverseDuration: Duration(milliseconds: 300),
+                              child: Homescreen()
+
+
+                            ));
+                          },
+                          child: Text('Create Account', style: Theme.of(context).textTheme.bodyMedium)),
                   ),
                 ),
               ],

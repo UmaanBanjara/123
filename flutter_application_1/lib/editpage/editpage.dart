@@ -3,12 +3,11 @@ import 'dart:io';
 
 import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/presentation/homescreen/homescreen.dart';
-import 'package:feed/presentation/profilescreen/profilepageuser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http; // Add http package in pubspec.yaml
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -20,129 +19,68 @@ class EditPage extends StatefulWidget {
 }
 
 class _EditPageState extends State<EditPage> {
+  final storage = FlutterSecureStorage();
   final _formKey = GlobalKey<FormState>();
   final TextEditingController username = TextEditingController();
   final TextEditingController bio = TextEditingController();
-  final storage = const FlutterSecureStorage();
 
-  bool isLoading = false;
+  bool isLoading = true;
+  bool isError = false;
+
   File? pfpImage;
   File? bannerImage;
 
-  String? pfpNetworkUrl;
-  String? bannerNetworkUrl;
+  // For remote images (URLs)
+  String? pfpUrl;
+  String? bannerUrl;
 
   final ImagePicker _picker = ImagePicker();
 
-  Future<Map<String, dynamic>?> updateImage() async {
-    setState(() => isLoading = true);
-    final token = await storage.read(key: 'jwt_token');
-    if (token == null) {
-      setState(() => isLoading = false);
-      errorNotice(context, 'Not Authenticated');
-      return null;
-    }
-
-    final uri = Uri.parse('http://192.168.1.5:3000/uploadfiles');
-    final request = http.MultipartRequest('POST', uri);
-    request.headers['Authorization'] = 'Bearer $token';
-
-    if (pfpImage != null) {
-      request.files.add(await http.MultipartFile.fromPath('profile_picture', pfpImage!.path));
-    }
-    if (bannerImage != null) {
-      request.files.add(await http.MultipartFile.fromPath('banner', bannerImage!.path));
-    }
-
-    try {
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      setState(() => isLoading = false);
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        errorNotice(context, 'Upload failed: ${response.statusCode}');
-        return null;
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
-      errorNotice(context, 'An error occurred: $e');
-      return null;
-    }
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserDetails();
   }
 
-  Future<void> fetchUserProfile() async {
-    setState(() => isLoading = true);
-    final token = await storage.read(key: 'jwt_token');
-
-    if (token == null) {
-      setState(() => isLoading = false);
-      errorNotice(context, 'Not Authenticated');
-      return;
-    }
-
-    final url = Uri.parse('http://192.168.1.5:3000/getuserdetail');
+  Future<void> _fetchUserDetails() async {
+    setState(() {
+      isLoading = true;
+      isError = false;
+    });
 
     try {
+      final token = await storage.read(key: 'jwt_token');
+
       final response = await http.get(
-        url,
+        Uri.parse('http://192.168.1.5:3000/getuserdetails'),
         headers: {
           'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
       );
 
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final data = decoded['user'];
+        final data = jsonDecode(response.body);
+        final userDetails = data['userDetails'];
 
         setState(() {
-          username.text = data['username'] ?? '';
-          bio.text = data['bio'] ?? '';
-          pfpNetworkUrl = data['profile_picture_url'];
-          bannerNetworkUrl = data['banner_url'];
+          username.text = userDetails['username'] ?? '';
+          bio.text = userDetails['bio'] ?? '';
+          pfpUrl = userDetails['profile_picture_url'];
+          bannerUrl = userDetails['banner_url'];
+          isLoading = false;
         });
       } else {
-        final decoded = jsonDecode(response.body);
-        errorNotice(context, decoded['error'] ?? 'Failed to load profile');
+        setState(() {
+          isLoading = false;
+          isError = true;
+        });
       }
     } catch (e) {
-      errorNotice(context, 'Error fetching profile: $e');
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
-
-  Future<bool> createProfile(String? profilePictureUrl, String? bannerPictureUrl) async {
-    final token = await storage.read(key: 'jwt_token');
-    final url = Uri.parse('http://192.168.1.5:3000/profilecreation');
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'username': username.text.trim(),
-          'bio': bio.text.trim(),
-          'profile_picture_url': profilePictureUrl,
-          'banner_url': bannerPictureUrl,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        errorNotice(context, "Profile Updated Successfully");
-        return true;
-      } else {
-        errorNotice(context, data['error'] ?? "Profile Update Failed. Please Try Again");
-        return false;
-      }
-    } catch (e) {
-      errorNotice(context, "Network Error. Please Try Again Later");
-      return false;
+      setState(() {
+        isLoading = false;
+        isError = true;
+      });
     }
   }
 
@@ -153,7 +91,10 @@ class _EditPageState extends State<EditPage> {
       if (picked != null) {
         File imageFile = File(picked.path);
         final cropped = await cropImage(imageFile, isPfp: true);
-        setState(() => pfpImage = cropped ?? imageFile);
+        setState(() {
+          pfpImage = cropped ?? imageFile;
+          pfpUrl = null; // Clear URL because user picked a new image
+        });
       }
     }
   }
@@ -165,7 +106,10 @@ class _EditPageState extends State<EditPage> {
       if (picked != null) {
         File imageFile = File(picked.path);
         final cropped = await cropImage(imageFile, isPfp: false);
-        setState(() => bannerImage = cropped ?? imageFile);
+        setState(() {
+          bannerImage = cropped ?? imageFile;
+          bannerUrl = null; // Clear URL because user picked a new image
+        });
       }
     }
   }
@@ -216,10 +160,50 @@ class _EditPageState extends State<EditPage> {
     return croppedFile != null ? File(croppedFile.path) : null;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    fetchUserProfile();
+  Future<void> _updateProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      isLoading = true;
+      isError = false;
+    });
+
+    try {
+      final token = await storage.read(key: 'jwt_token');
+
+      // For now, send URLs if images are not changed, empty strings otherwise
+      // TODO: implement image upload and set URLs accordingly
+      final profilePictureToSend = pfpUrl ?? '';
+      final bannerToSend = bannerUrl ?? '';
+
+      final response = await http.post(
+        Uri.parse('http://192.168.1.5:3000/profilecreation'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'username': username.text.trim(),
+          'profile_picture_url': profilePictureToSend,
+          'banner_url': bannerToSend,
+          'bio': bio.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        errorNotice(context, data['message'] ?? 'Profile updated successfully!');
+      } else {
+        final data = jsonDecode(response.body);
+        errorNotice(context, data['error'] ?? 'Failed to update profile');
+      }
+    } catch (e) {
+      errorNotice(context, 'Error updating profile. Please try again.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -229,145 +213,157 @@ class _EditPageState extends State<EditPage> {
     super.dispose();
   }
 
+  Widget _buildProfilePicture() {
+    if (pfpImage != null) {
+      return Image.file(pfpImage!, width: 100, height: 100, fit: BoxFit.cover);
+    } else if (pfpUrl != null && pfpUrl!.isNotEmpty) {
+      return Image.network(pfpUrl!, width: 100, height: 100, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
+        return Image.asset('assets/images/pngwing.com.png', width: 100, height: 100);
+      });
+    } else {
+      return Image.asset('assets/images/pngwing.com.png', width: 100, height: 100);
+    }
+  }
+
+  Widget _buildBannerImage() {
+    if (bannerImage != null) {
+      return Image.file(bannerImage!, fit: BoxFit.cover);
+    } else if (bannerUrl != null && bannerUrl!.isNotEmpty) {
+      return Image.network(bannerUrl!, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
+        return const Center(child: Icon(Icons.image, size: 40));
+      });
+    } else {
+      return const Center(child: Icon(Icons.image, size: 40));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (isError) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Failed to load user data.'),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _fetchUserDetails,
+                child: const Text('Retry'),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Form(
-                  key: _formKey,
-                  child: ListView(
-                    children: [
-                      const SizedBox(height: 10),
-                      Text("Edit Profile", style : TextStyle(
-                        fontFamily: "Primary" , 
-                        fontSize: 25
-                      )),
-                      const SizedBox(height: 30),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                const SizedBox(height: 10),
+                const Text("Edit Profile", style: TextStyle(fontFamily: "Primary", fontSize: 25)),
+                const SizedBox(height: 30),
 
-                      // Username
-                      Customtextfile(
-                        controller: username,
-                        obscureText: false,
-                        prefixIcon: const Icon(Icons.person),
-                        suffixText: '.feeduser',
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Username required';
-                          if (value.contains(' ')) return 'No spaces allowed';
-                          if (value.length > 10) return 'Max 10 characters';
-                          return null;
-                        },
+                // Username
+                Customtextfile(
+                  controller: username,
+                  obscureText: false,
+                  prefixIcon: const Icon(Icons.person),
+                  suffixText: '.feeduser',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return 'Username required';
+                    if (value.contains(' ')) return 'No spaces allowed';
+                    if (value.length > 10) return 'Max 10 characters';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Bio
+                Customtextfile(
+                  controller: bio,
+                  prefixIcon: const Icon(Icons.info_outline),
+                  obscureText: false,
+                  hinttext: 'Bio',
+                  validator: (value) {
+                    if (value != null && value.length > 300) return 'Max 300 characters';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 30),
+
+                // Profile Picture
+                Center(
+                  child: GestureDetector(
+                    onTap: pickPfp,
+                    child: CircleAvatar(
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      radius: 50,
+                      child: ClipOval(
+                        child: _buildProfilePicture(),
                       ),
-                      const SizedBox(height: 20),
-
-                      // Bio
-                      Customtextfile(
-                        controller: bio,
-                        prefixIcon: const Icon(Icons.info_outline),
-                        obscureText: false,
-                        hinttext: 'Bio',
-                        validator: (value) {
-                          if (value != null && value.length > 300) return 'Max 300 characters';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Profile Picture
-                      Center(
-                        child: GestureDetector(
-                          onTap: pickPfp,
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.grey[300],
-                            child: ClipOval(
-                              child: pfpImage != null
-                                  ? Image.file(pfpImage!, width: 100, height: 100, fit: BoxFit.cover)
-                                  : (pfpNetworkUrl != null && pfpNetworkUrl!.isNotEmpty
-                                      ? Image.network(pfpNetworkUrl!, width: 100, height: 100, fit: BoxFit.cover)
-                                      : Image.asset('assets/images/pngwing.com.png', width: 100, height: 100)),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Center(child: Text('Profile Picture')),
-
-                      const SizedBox(height: 20),
-
-                      // Banner
-                      GestureDetector(
-                        onTap: pickBanner,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: AspectRatio(
-                            aspectRatio: 3 / 1,
-                            child: Container(
-                              color: Colors.grey[300],
-                              child: bannerImage != null
-                                  ? Image.file(bannerImage!, fit: BoxFit.cover)
-                                  : (bannerNetworkUrl != null && bannerNetworkUrl!.isNotEmpty
-                                      ? Image.network(bannerNetworkUrl!, fit: BoxFit.cover)
-                                      : const Center(child: Icon(Icons.image, size: 40))),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Center(child: Text("Banner")),
-
-                      const SizedBox(height: 30),
-
-                      // Submit button
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () async {
-                                  if (_formKey.currentState!.validate()) {
-                                    setState(() => isLoading = true);
-
-                                    Map<String, dynamic>? uploadResult = await updateImage();
-
-                                    if (uploadResult == null) {
-                                      setState(() => isLoading = false);
-                                      return;
-                                    }
-
-                                    String? profilePictureUrl =
-                                        uploadResult['profile_picture_url'] ?? pfpNetworkUrl;
-                                    String? bannerPictureUrl = uploadResult['banner_url'] ?? bannerNetworkUrl;
-
-                                    bool success = await createProfile(profilePictureUrl, bannerPictureUrl);
-
-                                    setState(() => isLoading = false);
-
-                                    if (success) {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        PageTransition(
-                                          type: PageTransitionType.fade,
-                                          duration: Duration(milliseconds: 300),
-                                          child: Homescreen(),
-                                          reverseDuration: Duration(milliseconds: 300),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                          child: const Text('Update Profile' , style: TextStyle(
-                            fontSize: 25
-                          ),),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 10),
+                const Center(child: Text('Profile Picture')),
+
+                const SizedBox(height: 20),
+
+                // Banner
+                GestureDetector(
+                  onTap: pickBanner,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: AspectRatio(
+                      aspectRatio: 3 / 1,
+                      child: Container(
+                        child: _buildBannerImage(),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Center(child: Text("Banner")),
+
+                const SizedBox(height: 30),
+
+                // Submit button
+                Center(
+                  child: ElevatedButton(
+                    onPressed:(){ 
+                      
+                      _updateProfile();
+                      Navigator.push(context, PageTransition(
+                        type: PageTransitionType.fade , 
+                        duration: Duration(milliseconds: 300) , 
+                        reverseDuration: Duration(milliseconds: 300) , 
+                        child: Homescreen()
+                      ));
+                      
+                      },
+                    child: const Text(
+                      'Update Profile',
+                      style: TextStyle(fontSize: 25),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -18,7 +18,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 
 class Posts extends StatefulWidget {
@@ -40,92 +39,7 @@ class _PostsState extends State<Posts> {
   final ImagePicker _picker = ImagePicker();
   final Map<String, VideoPlayerController> _videoControllers = {};
 
-  // Removed compressImage method entirely
-
-  // Helper method to compress videos
-  Future<File?> compressVideo(File file) async {
-    final info = await VideoCompress.compressVideo(
-      file.path,
-      quality: VideoQuality.MediumQuality,
-      deleteOrigin: false,
-    );
-    return info?.file;
-  }
-
-  Future<void> storeindb() async {
-    final token = await storage.read(key: 'jwt_token');
-    final url = Uri.parse('http://192.168.1.5:3000/tweets');
-
-    var request = http.MultipartRequest('POST', url);
-    request.headers['Authorization'] = 'Bearer $token';
-
-    request.fields['content'] = postController.text;
-    request.fields['location'] = _locationText ?? '';
-
-    int maxfiles = 5;
-    for (int i = 0; i < _mediaFiles.length && i < maxfiles; i++) {
-      var file = _mediaFiles[i];
-      final lowerPath = file.path.toLowerCase();
-
-      if (lowerPath.endsWith('.jpg') ||
-          lowerPath.endsWith('.jpeg') ||
-          lowerPath.endsWith('.png')) {
-        // No image compression — upload original image bytes
-        var fileBytes = await File(file.path).readAsBytes();
-        var multipartFile = http.MultipartFile.fromBytes(
-          'mediafiles',
-          fileBytes,
-          filename: file.name ?? 'image.jpg',
-        );
-        request.files.add(multipartFile);
-      } else if (lowerPath.endsWith('.mp4') ||
-          lowerPath.endsWith('.mov') ||
-          lowerPath.endsWith('.avi')) {
-        // Compress video and add compressed file
-        File? compressedVideoFile = await compressVideo(File(file.path));
-        if (compressedVideoFile != null) {
-          var fileBytes = await compressedVideoFile.readAsBytes();
-          var multipartFile = http.MultipartFile.fromBytes(
-            'mediafiles',
-            fileBytes,
-            filename: file.name ?? 'video.mp4',
-          );
-          request.files.add(multipartFile);
-        } else {
-          // fallback to original file bytes if compression failed
-          var fileBytes = await File(file.path).readAsBytes();
-          var multipartFile = http.MultipartFile.fromBytes(
-            'mediafiles',
-            fileBytes,
-            filename: file.name ?? 'video.mp4',
-          );
-          request.files.add(multipartFile);
-        }
-      } else {
-        // For other file types (if any), just upload original bytes
-        var fileBytes = await File(file.path).readAsBytes();
-        var multipartFile = http.MultipartFile.fromBytes(
-          'mediafiles',
-          fileBytes,
-          filename: file.name ?? 'file',
-        );
-        request.files.add(multipartFile);
-      }
-    }
-
-    try {
-      final response = await request.send();
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Success handling
-        print('Post uploaded successfully');
-      } else {
-        // Error handling
-        print('Failed to upload post. Status: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error uploading post: $e');
-    }
-  }
+  // Removed compressVideo and storeindb methods entirely
 
   Future<void> _initializeVideoController(XFile file) async {
     final controller = VideoPlayerController.file(File(file.path));
@@ -302,7 +216,7 @@ class _PostsState extends State<Posts> {
             padding: const EdgeInsets.only(right: 15),
             child: TextButton(
               onPressed: () async {
-                await storeindb();
+                // Backend-related logic removed; do nothing here
               },
               child: const Text(
                 'Post',
@@ -444,7 +358,7 @@ class _PostsState extends State<Posts> {
             ),
           ),
 
-          // New Map and Location Info Section
+          // Map and Location Info Section
           if (_userLatLng != null)
             Column(
               children: [
