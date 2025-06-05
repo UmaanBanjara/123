@@ -68,9 +68,8 @@ class _ProfileCreationState extends State<ProfileCreation> {
       var response = await request.send();
 
       if (response.statusCode == 200) {
-        // You can parse response if needed
         final respStr = await response.stream.bytesToString();
-       errorNotice(context, "Upload Succesfull");
+        errorNotice(context, "Upload Successful");
       } else {
         errorNotice(context, "Upload failed with status: ${response.statusCode}");
       }
@@ -81,44 +80,44 @@ class _ProfileCreationState extends State<ProfileCreation> {
     }
   }
 
-  //send username and bio to backend
-Future<void> sendUsernameAndBio() async {
-  if (!_formKey.currentState!.validate()) return;
+  // Send username and bio to backend
+  Future<void> sendUsernameAndBio() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  try {
-    setState(() => isLoading = true);
-    final url = Uri.parse('http://192.168.1.5:3000/profilecreation');
-    final token = await storage.read(key: 'jwt_token');
+    try {
+      setState(() => isLoading = true);
+      final url = Uri.parse('http://192.168.1.5:3000/profilecreation');
+      final token = await storage.read(key: 'jwt_token');
 
-    if (token == null) {
-      errorNotice(context, "Invalid Token, Please Login Again");
+      if (token == null) {
+        errorNotice(context, "Invalid Token, Please Login Again");
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'username': username.text.trim(),
+          'bio': bio.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        errorNotice(context, "Profile info updated!");
+      } else {
+        errorNotice(context, "Update failed: ${response.statusCode}");
+      }
+    } catch (e) {
+      errorNotice(context, "An error occurred: $e");
+    } finally {
       setState(() => isLoading = false);
-      return;
     }
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'username': username.text.trim(),
-        'bio': bio.text.trim(),
-      }),
-    );
-
-    if (response.statusCode == 200) {
-     errorNotice(context, "Profile info updated!");
-    } else {
-      errorNotice(context, "Update failed: ${response.statusCode}");
-    }
-  } catch (e) {
-    errorNotice(context, "An error occurred: $e");
-  } finally {
-    setState(() => isLoading = false);
   }
-}
 
   // Pick and crop profile picture image
   Future<void> pickPfp() async {
@@ -246,8 +245,8 @@ Future<void> sendUsernameAndBio() async {
                       if (value.contains(' ')) {
                         return 'Username cannot contain spaces';
                       }
-                      if (value.length > 10) {
-                        return 'Username cannot exceed 10 characters';
+                      if (value.length > 15) {
+                        return 'Username cannot exceed 15 characters';
                       }
                       return null;
                     },
@@ -269,8 +268,8 @@ Future<void> sendUsernameAndBio() async {
                       fontWeight: FontWeight.normal,
                     ),
                     validator: (value) {
-                      if (value != null && value.characters.length > 300) {
-                        return 'Bio cannot exceed 300 characters';
+                      if (value != null && value.length > 200) {
+                        return 'Bio cannot exceed 200 characters';
                       }
                       return null;
                     },
@@ -338,9 +337,18 @@ Future<void> sendUsernameAndBio() async {
                         : () async {
                             if (!_formKey.currentState!.validate()) return;
 
-                            // Call your upload method here
                             await pfpANDbanner();
                             await sendUsernameAndBio();
+
+                            Navigator.push(
+                              context,
+                              PageTransition(
+                                type: PageTransitionType.fade,
+                                duration: const Duration(milliseconds: 300),
+                                reverseDuration: const Duration(milliseconds: 300),
+                                child: const Homescreen(),
+                              ),
+                            );
                           },
                     child: isLoading
                         ? const SizedBox(
@@ -348,20 +356,7 @@ Future<void> sendUsernameAndBio() async {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : GestureDetector(
-                          
-                          onTap: (){
-                            Navigator.push(context, PageTransition(
-
-                              type : PageTransitionType.fade , 
-                              duration: Duration(milliseconds: 300),
-                              reverseDuration: Duration(milliseconds: 300),
-                              child: Homescreen()
-
-
-                            ));
-                          },
-                          child: Text('Create Account', style: Theme.of(context).textTheme.bodyMedium)),
+                        : Text('Create Account', style: Theme.of(context).textTheme.bodyMedium),
                   ),
                 ),
               ],

@@ -3,7 +3,6 @@ const path = require('path');
 const os = require('os');
 
 const homeDir = os.homedir();
-
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     try {

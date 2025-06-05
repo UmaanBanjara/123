@@ -1,3 +1,5 @@
+
+const os = require('os');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const pool = require('./db');
@@ -13,7 +15,14 @@ const router = require('./tenor/tenor');
 const { storage } = require('./upload/upload');
 const upload = multer({ storage });
 
+const homeDir = os.homedir();
 const app = express();
+
+
+app.use('/uploads/pfp', express.static(path.join(homeDir, 'uploaded_pfp_by_user')));
+app.use('/uploads/banner', express.static(path.join(homeDir, 'uploaded_banner_by_user')));
+
+
 const PORT = 3000;
 
 app.use(express.json());
@@ -239,13 +248,17 @@ app.post(
       const profilePictureFile = files.profile_picture ? files.profile_picture[0] : null;
       const bannerFile = files.banner ? files.banner[0] : null;
 
-      const profilePicturePath = profilePictureFile ? profilePictureFile.path : null;
-      const bannerPath = bannerFile ? bannerFile.path : null;
+      const profilePicturePath = profilePictureFile ? `/uploads/pfp/${profilePictureFile.filename}`  : null;
+      const bannerPath = bannerFile ? `/uploads/banner/${bannerFile.filename}` : null;
+      console.log('User ID:', userId);
+      console.log('Profile Picture Path:', profilePicturePath);
+      console.log('Banner Path:', bannerPath);
+const result = await pool.query(
+  'UPDATE users SET profile_picture_url = $1, banner_url = $2 WHERE id = $3',
+  [profilePicturePath, bannerPath, userId]
+);
 
-      await pool.query(
-        'UPDATE users SET profile_picture_url = $1, banner_url = $2 WHERE id = $3',
-        [profilePicturePath, bannerPath, userId]
-      );
+console.log('Update query result:', result);
 
       res.status(200).json({
         message: 'Files uploaded successfully',
