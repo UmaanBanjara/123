@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:feed/settings/settings.dart';
 import 'package:feed/tabbars/following_tabview.dart';
 import 'package:feed/tabbars/foryou_tabview.dart';
 import 'package:feed/userposts/userposts.dart';
@@ -20,7 +21,7 @@ class Homescreen extends StatefulWidget {
 }
 
 class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
-  final String baseurl = 'http://192.168.1.5:3000'; 
+  final String baseurl = 'http://192.168.1.5:3000';
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final FlutterSecureStorage storage = const FlutterSecureStorage();
@@ -246,12 +247,39 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
       ),
       contentPadding: const EdgeInsets.only(left: 10),
       onTap: () {
+        Navigator.pop(context); // Close drawer first
+
+        if (title == "Profile") {
+          Navigator.push(
+            context,
+            PageTransition(
+              type: PageTransitionType.fade,
+              duration: const Duration(milliseconds: 300),
+              reverseDuration: const Duration(milliseconds: 300),
+              child: const UserProfile(),
+            ),
+          );
+          return;
+        }
+
+        if (title == "Settings") {
+          Navigator.push(
+            context,
+            PageTransition(
+              type: PageTransitionType.fade,
+              duration: const Duration(milliseconds: 300),
+              reverseDuration: const Duration(milliseconds: 300),
+              child: const Settings(),
+            ),
+          );
+          return;
+        }
+
         if (index != null) {
           setState(() {
             _selectedIndex = index;
           });
         }
-        Navigator.pop(context);
       },
     );
   }
@@ -295,6 +323,23 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
           ForyouTabview(),
           FollowingTabview(),
         ],
+      ),
+    );
+  }
+}
+
+// Placeholder Settings screen
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Settings"),
+      ),
+      body: const Center(
+        child: Text("Settings screen content goes here"),
       ),
     );
   }

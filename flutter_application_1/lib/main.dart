@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'config/theme/myapptheme.dart';
 import 'presentation/loginscreen/loginscreen.dart';
 import 'presentation/homescreen/homescreen.dart';
 
@@ -29,7 +28,7 @@ class Feed extends StatelessWidget {
       builder: (context, theme) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.darkTheme,
+          theme: theme,
           home:  SplashScreen(), // You can replace with SplashScreen
         );
       },
