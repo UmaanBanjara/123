@@ -157,7 +157,18 @@ app.post('/google_signin', async (req, res) => {
 
     console.log('[Google Signin] New user created:', email);
 
-    return res.status(201).json({ message: 'User created', token, user });
+return res.status(201).json({
+  message: 'User created',
+  token,
+  user: {
+    id: user.id,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    create_at: user.create_at,
+    profile_completed: user.profile_completed, // ✅ This is needed
+  }
+});
   } catch (err) {
     console.error('[Google Signin] Error:', err.message);
     res.status(500).json({ error: 'Server error' });

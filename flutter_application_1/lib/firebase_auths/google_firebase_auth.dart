@@ -1,5 +1,6 @@
 import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/profilecreation/profile_creation.dart';
+import 'package:feed/presentation/homescreen/homescreen.dart'; // import Homescreen
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -54,16 +55,18 @@ Future<void> signInWithGoogle(BuildContext context) async {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responsedata = jsonDecode(response.body);
         final token = responsedata['token'];
+        final bool profileCompleted = responsedata['user']?['profile_completed'] == true;
 
-        // store token safely
+        // store token and profile_completed flag safely
         await storage.write(key: 'jwt_token', value: token);
+        await storage.write(key: 'profile_completed', value: profileCompleted.toString());
 
-        // successful login - navigate to ProfileCreation without dark mode params
-        Navigator.push(
+        // Navigate based on profile completion status
+        Navigator.pushReplacement(
           context,
           PageTransition(
             type: PageTransitionType.fade,
-            child: const ProfileCreation(),
+            child: profileCompleted ? const Homescreen() : const ProfileCreation(),
             duration: const Duration(milliseconds: 300),
             reverseDuration: const Duration(milliseconds: 300),
           ),
@@ -77,4 +80,4 @@ Future<void> signInWithGoogle(BuildContext context) async {
   } catch (e) {
     errorNotice(context, 'An error occurred during Google Sign-In.');
   }
-} 
+}

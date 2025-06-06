@@ -53,7 +53,6 @@ class _SettingsState extends State<Settings> {
               ),
               onTap: () async{
                   await storage.delete(key: 'jwt_token');
-                  await storage.delete(key: 'profile_completed');
                 errorNotice(context, "Please Re-Login");
                 Navigator.pushAndRemoveUntil(context, PageTransition(
 
