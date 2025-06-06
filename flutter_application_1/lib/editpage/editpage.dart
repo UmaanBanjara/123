@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/presentation/homescreen/homescreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http; // Add http package in pubspec.yaml
+import 'package:http/http.dart' as http;
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -19,6 +20,7 @@ class EditPage extends StatefulWidget {
 }
 
 class _EditPageState extends State<EditPage> {
+  final String baseurl = 'http://192.168.1.5:3000';
   final storage = FlutterSecureStorage();
   final _formKey = GlobalKey<FormState>();
   final TextEditingController username = TextEditingController();
@@ -26,11 +28,11 @@ class _EditPageState extends State<EditPage> {
 
   bool isLoading = true;
   bool isError = false;
+  bool isUpdating = false; // New loading state for update
 
   File? pfpImage;
   File? bannerImage;
 
-  // For remote images (URLs)
   String? pfpUrl;
   String? bannerUrl;
 
@@ -52,7 +54,7 @@ class _EditPageState extends State<EditPage> {
       final token = await storage.read(key: 'jwt_token');
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.5:3000/getuserdetails'),
+        Uri.parse('$baseurl/getuserdetails'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -93,7 +95,7 @@ class _EditPageState extends State<EditPage> {
         final cropped = await cropImage(imageFile, isPfp: true);
         setState(() {
           pfpImage = cropped ?? imageFile;
-          pfpUrl = null; // Clear URL because user picked a new image
+          pfpUrl = null;
         });
       }
     }
@@ -108,7 +110,7 @@ class _EditPageState extends State<EditPage> {
         final cropped = await cropImage(imageFile, isPfp: false);
         setState(() {
           bannerImage = cropped ?? imageFile;
-          bannerUrl = null; // Clear URL because user picked a new image
+          bannerUrl = null;
         });
       }
     }
@@ -164,28 +166,30 @@ class _EditPageState extends State<EditPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      isLoading = true;
+      isUpdating = true;
       isError = false;
     });
 
     try {
       final token = await storage.read(key: 'jwt_token');
 
-      // For now, send URLs if images are not changed, empty strings otherwise
-      // TODO: implement image upload and set URLs accordingly
-      final profilePictureToSend = pfpUrl ?? '';
-      final bannerToSend = bannerUrl ?? '';
+      if (token == null) {
+        errorNotice(context, "Invalid Token, Please Re-login");
+        setState(() {
+          isUpdating = false;
+        });
+        return;
+      }
+
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.5:3000/profilecreation'),
+        Uri.parse('$baseurl/profilecreation'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
           'username': username.text.trim(),
-          'profile_picture_url': profilePictureToSend,
-          'banner_url': bannerToSend,
           'bio': bio.text.trim(),
         }),
       );
@@ -193,6 +197,17 @@ class _EditPageState extends State<EditPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         errorNotice(context, data['message'] ?? 'Profile updated successfully!');
+
+        // Navigate after success
+        Navigator.pushReplacement(
+          context,
+          PageTransition(
+            type: PageTransitionType.fade,
+            duration: const Duration(milliseconds: 300),
+            reverseDuration: const Duration(milliseconds: 300),
+            child: const Homescreen(),
+          ),
+        );
       } else {
         final data = jsonDecode(response.body);
         errorNotice(context, data['error'] ?? 'Failed to update profile');
@@ -200,41 +215,68 @@ class _EditPageState extends State<EditPage> {
     } catch (e) {
       errorNotice(context, 'Error updating profile. Please try again.');
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isUpdating = false;
+        });
+      }
     }
   }
+Future<void> pfpANDbanner() async {
+    if (pfpImage == null && bannerImage == null) {
+      errorNotice(context, "Please select at least one image.");
+      return;
+    }
+
+    try {
+      setState(() => isLoading = true);
+      final url = Uri.parse('http://192.168.1.5:3000/upload/profile-banner');
+      final token = await storage.read(key: 'jwt_token');
+
+      if (token == null) {
+        errorNotice(context, "Invalid Token, Please Login Again");
+        setState(() => isLoading = false);
+        return;
+      }
+
+      var request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      if (pfpImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'profile_picture',
+          pfpImage!.path,
+        ));
+      }
+
+      if (bannerImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'banner',
+          bannerImage!.path,
+        ));
+      }
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        errorNotice(context, "Upload Successful");
+      } else {
+        errorNotice(context, "Upload failed with status: ${response.statusCode}");
+      }
+    } catch (e) {
+      errorNotice(context, "An error occurred: $e");
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
 
   @override
   void dispose() {
     bio.dispose();
     username.dispose();
     super.dispose();
-  }
-
-  Widget _buildProfilePicture() {
-    if (pfpImage != null) {
-      return Image.file(pfpImage!, width: 100, height: 100, fit: BoxFit.cover);
-    } else if (pfpUrl != null && pfpUrl!.isNotEmpty) {
-      return Image.network(pfpUrl!, width: 100, height: 100, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
-        return Image.asset('assets/images/pngwing.com.png', width: 100, height: 100);
-      });
-    } else {
-      return Image.asset('assets/images/pngwing.com.png', width: 100, height: 100);
-    }
-  }
-
-  Widget _buildBannerImage() {
-    if (bannerImage != null) {
-      return Image.file(bannerImage!, fit: BoxFit.cover);
-    } else if (bannerUrl != null && bannerUrl!.isNotEmpty) {
-      return Image.network(bannerUrl!, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
-        return const Center(child: Icon(Icons.image, size: 40));
-      });
-    } else {
-      return const Center(child: Icon(Icons.image, size: 40));
-    }
   }
 
   @override
@@ -309,11 +351,13 @@ class _EditPageState extends State<EditPage> {
                   child: GestureDetector(
                     onTap: pickPfp,
                     child: CircleAvatar(
+                      backgroundImage: pfpImage != null
+                          ? FileImage(pfpImage!)
+                          : (pfpUrl != null && pfpUrl!.isNotEmpty
+                              ? CachedNetworkImageProvider('$baseurl$pfpUrl')
+                              : const AssetImage("assets/images/pngwing.com.png")) as ImageProvider,
                       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                       radius: 50,
-                      child: ClipOval(
-                        child: _buildProfilePicture(),
-                      ),
                     ),
                   ),
                 ),
@@ -329,9 +373,16 @@ class _EditPageState extends State<EditPage> {
                     borderRadius: BorderRadius.circular(8),
                     child: AspectRatio(
                       aspectRatio: 3 / 1,
-                      child: Container(
-                        child: _buildBannerImage(),
-                      ),
+                      child: bannerImage != null
+                          ? Image.file(bannerImage!, fit: BoxFit.cover)
+                          : (bannerUrl != null && bannerUrl!.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: '$baseurl$bannerUrl',
+                                  fit: BoxFit.cover,
+                                  errorWidget: (context, url, error) =>
+                                      const Center(child: Icon(Icons.image, size: 40)),
+                                )
+                              : const Center(child: Icon(Icons.image, size: 40))),
                     ),
                   ),
                 ),
@@ -340,25 +391,20 @@ class _EditPageState extends State<EditPage> {
 
                 const SizedBox(height: 30),
 
-                // Submit button
+                // Submit button or loading indicator
                 Center(
-                  child: ElevatedButton(
-                    onPressed:(){ 
-                      
-                      _updateProfile();
-                      Navigator.push(context, PageTransition(
-                        type: PageTransitionType.fade , 
-                        duration: Duration(milliseconds: 300) , 
-                        reverseDuration: Duration(milliseconds: 300) , 
-                        child: Homescreen()
-                      ));
-                      
-                      },
-                    child: const Text(
-                      'Update Profile',
-                      style: TextStyle(fontSize: 25),
-                    ),
-                  ),
+                  child: isUpdating
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: (){
+                            _updateProfile();
+                            pfpANDbanner();
+                          },
+                          child: const Text(
+                            'Update Profile',
+                            style: TextStyle(fontSize: 25),
+                          ),
+                        ),
                 ),
               ],
             ),

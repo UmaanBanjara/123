@@ -1,7 +1,6 @@
+import 'dart:convert';
 import 'dart:core';
 import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:feed/core/common/custom_textfield.dart';
 import 'package:feed/core/utils/error_notice.dart';
 import 'package:feed/gifs/userchoosengifs.dart';
@@ -28,6 +27,7 @@ class Posts extends StatefulWidget {
 }
 
 class _PostsState extends State<Posts> {
+  final String baseurl = 'http://192.168.1.5:3000';
   final storage = FlutterSecureStorage();
   Position? _currentPosition;
   String? _locationText;
@@ -38,8 +38,63 @@ class _PostsState extends State<Posts> {
   final List<XFile> _mediaFiles = [];
   final ImagePicker _picker = ImagePicker();
   final Map<String, VideoPlayerController> _videoControllers = {};
+  bool _isPosting = false;
 
-  // Removed compressVideo and storeindb methods entirely
+  Future<String?> createTweet() async {
+    final token = await storage.read(key: 'jwt_token');
+    final uri = Uri.parse('$baseurl/tweets/create');
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'content': postController.text.trim(),
+        'location': _locationText ?? '',
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data['tweetId'].toString();
+    } else {
+      errorNotice(context, 'Failed to create tweet');
+      return null;
+    }
+  }
+
+  Future<void> uploadMedia(String tweetId) async {
+    try {
+      final url = Uri.parse('$baseurl/upload/mediafiles');
+      final token = await storage.read(key: 'jwt_token');
+
+      if (token == null) {
+        errorNotice(context, "Invalid Token, Please Re-Login");
+        return;
+      }
+
+      var request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $token';
+      request.fields['tweetId'] = tweetId;
+
+      for (var file in _mediaFiles) {
+        request.files.add(
+          await http.MultipartFile.fromPath('mediafiles', file.path),
+        );
+      }
+
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        print("Media upload success");
+      } else {
+        errorNotice(context, "Media upload failed");
+      }
+    } catch (e) {
+      errorNotice(context, "Upload Error: $e");
+    }
+  }
 
   Future<void> _initializeVideoController(XFile file) async {
     final controller = VideoPlayerController.file(File(file.path));
@@ -127,45 +182,6 @@ class _PostsState extends State<Posts> {
     }
   }
 
-  Future<void> showMediaSourceDialog() async {
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Add Media',
-          style: TextStyle(fontSize: 20, fontFamily: "rEGULAR"),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text(
-                "Choose from Gallery",
-                style: TextStyle(fontSize: 20, fontFamily: "rEGULAR"),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                pickMedia();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text(
-                "Take a Photo",
-                style: TextStyle(fontSize: 20, fontFamily: "rEGULAR"),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                pickFromCamera();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<File?> cropImage(File imageFile, {required bool isPfp}) async {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: imageFile.path,
@@ -192,6 +208,34 @@ class _PostsState extends State<Posts> {
     return croppedFile != null ? File(croppedFile.path) : null;
   }
 
+  void _showMediaSelectionSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pick from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                pickMedia();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                pickFromCamera();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     for (var controller in _videoControllers.values) {
@@ -201,28 +245,42 @@ class _PostsState extends State<Posts> {
     super.dispose();
   }
 
+  Future<void> handlePost() async {
+    setState(() {
+      _isPosting = true;
+    });
+
+    final tweetId = await createTweet();
+    if (tweetId != null && _mediaFiles.isNotEmpty) {
+      await uploadMedia(tweetId);
+    }
+
+    setState(() {
+      _isPosting = false;
+    });
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.close, size: 30),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 15),
-            child: TextButton(
-              onPressed: () async {
-                // Backend-related logic removed; do nothing here
-              },
-              child: const Text(
-                'Post',
-                style: TextStyle(fontSize: 20, fontFamily: "bOLD"),
-              ),
-            ),
+            child: _isPosting
+                ? const Center(child: CircularProgressIndicator())
+                : TextButton(
+                    onPressed: handlePost,
+                    child: const Text(
+                      'Post',
+                      style: TextStyle(fontSize: 20, fontFamily: "bOLD"),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -265,21 +323,13 @@ class _PostsState extends State<Posts> {
                       top: 4,
                       right: 4,
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _gifUrls.removeAt(index);
-                          });
-                        },
+                        onTap: () => setState(() => _gifUrls.removeAt(index)),
                         child: Container(
                           decoration: const BoxDecoration(
                             color: Colors.black54,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 20),
                         ),
                       ),
                     ),
@@ -306,24 +356,17 @@ class _PostsState extends State<Posts> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: isVideo
-                            ? (_videoControllers[file.path] != null &&
-                                    _videoControllers[file.path]!.value.isInitialized)
+                            ? (_videoControllers[file.path]?.value.isInitialized ?? false)
                                 ? AspectRatio(
-                                    aspectRatio:
-                                        _videoControllers[file.path]!.value.aspectRatio,
+                                    aspectRatio: _videoControllers[file.path]!.value.aspectRatio,
                                     child: VideoPlayer(_videoControllers[file.path]!),
                                   )
                                 : Container(
                                     height: 150,
                                     color: Colors.black12,
-                                    child: const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
+                                    child: const Center(child: CircularProgressIndicator()),
                                   )
-                            : Image.file(
-                                File(file.path),
-                                fit: BoxFit.cover,
-                              ),
+                            : Image.file(File(file.path), fit: BoxFit.cover),
                       ),
                       Positioned(
                         top: 4,
@@ -331,11 +374,9 @@ class _PostsState extends State<Posts> {
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
-                              final removedFile = _mediaFiles.removeAt(index);
-                              if (_videoControllers.containsKey(removedFile.path)) {
-                                _videoControllers[removedFile.path]!.dispose();
-                                _videoControllers.remove(removedFile.path);
-                              }
+                              final removed = _mediaFiles.removeAt(index);
+                              _videoControllers[removed.path]?.dispose();
+                              _videoControllers.remove(removed.path);
                             });
                           },
                           child: Container(
@@ -343,11 +384,7 @@ class _PostsState extends State<Posts> {
                               color: Colors.black54,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 20,
-                            ),
+                            child: const Icon(Icons.close, color: Colors.white, size: 20),
                           ),
                         ),
                       ),
@@ -357,8 +394,6 @@ class _PostsState extends State<Posts> {
               ),
             ),
           ),
-
-          // Map and Location Info Section
           if (_userLatLng != null)
             Column(
               children: [
@@ -382,11 +417,7 @@ class _PostsState extends State<Posts> {
                             width: 80,
                             height: 80,
                             point: _userLatLng!,
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Colors.red,
-                              size: 40,
-                            ),
+                            child: const Icon(Icons.location_on, color: Colors.red, size: 40),
                           ),
                         ],
                       ),
@@ -396,20 +427,16 @@ class _PostsState extends State<Posts> {
                 const SizedBox(height: 8),
                 Text(
                   _locationText ?? '',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 12),
               ],
             ),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               IconButton(
-                onPressed: showMediaSourceDialog,
+                onPressed: _showMediaSelectionSheet,
                 icon: const Icon(Icons.photo_library, size: 30),
               ),
               IconButton(
@@ -433,9 +460,7 @@ class _PostsState extends State<Posts> {
                 icon: const Icon(Icons.gif, size: 30),
               ),
               IconButton(
-                onPressed: () {
-                  _handleLocationPermission();
-                },
+                onPressed: _handleLocationPermission,
                 icon: const Icon(Icons.location_on, size: 30),
               ),
             ],

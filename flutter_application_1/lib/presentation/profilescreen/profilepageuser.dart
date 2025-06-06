@@ -18,6 +18,7 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin {
+  final String baseurl = 'http://192.168.1.5:3000';
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   Map<String, dynamic>? userData;
@@ -52,7 +53,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
       error = null;
     });
 
-    final url = Uri.parse('http://192.168.1.5:3000/getuserdetails');
+    final url = Uri.parse('$baseurl/getuserdetails');
 
     try {
       final token = await _secureStorage.read(key: 'jwt_token');
@@ -93,7 +94,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
   String _formatJoinDate(String rawDate) {
     try {
       final parsedDate = DateTime.parse(rawDate);
-      return DateFormat.yMMMM().format(parsedDate); // e.g. June 2025
+      return DateFormat.yMMMM().format(parsedDate);
     } catch (e) {
       return rawDate;
     }
@@ -158,6 +159,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                           width: double.infinity,
                                           height: MediaQuery.of(context).size.height / 6.5,
                                           decoration: BoxDecoration(
+                                            color: Colors.grey[300],
                                             boxShadow: [
                                               BoxShadow(
                                                 color: isDark
@@ -166,10 +168,10 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                                 blurRadius: 8,
                                               ),
                                             ],
-                                            color: Colors.grey[300],
                                             image: userData?['banner_url'] != null
                                                 ? DecorationImage(
-                                                    image: CachedNetworkImageProvider(userData!['banner_url']),
+                                                    image: CachedNetworkImageProvider(
+                                                        '$baseurl${userData!['banner_url']}'),
                                                     fit: BoxFit.cover,
                                                   )
                                                 : null,
@@ -206,7 +208,8 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                               radius: 40,
                                               backgroundColor: Colors.grey.withOpacity(0.2),
                                               backgroundImage: userData?['profile_picture_url'] != null
-                                                  ? CachedNetworkImageProvider(userData!['profile_picture_url'])
+                                                  ? CachedNetworkImageProvider(
+                                                      '$baseurl${userData!['profile_picture_url']}')
                                                   : const AssetImage("assets/images/pngwing.com.png")
                                                       as ImageProvider,
                                             ),
@@ -264,16 +267,16 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                     padding: const EdgeInsets.only(left: 16, top: 9),
                                     child: Row(
                                       children: [
-                                        Icon(Icons.calendar_today,
-                                            size: 16, color: isDark ? Colors.grey : Colors.grey),
+                                        Icon(Icons.calendar_today, size: 16, color: Colors.grey),
                                         const SizedBox(width: 5),
                                         Text(
                                           'Joined ${_formatJoinDate(userData!['create_at'])}',
                                           style: const TextStyle(
-                                              fontSize: 14,
-                                              fontFamily: "rEGULAR",
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.normal),
+                                            fontSize: 14,
+                                            fontFamily: "rEGULAR",
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.normal,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -286,19 +289,21 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                                       Text(
                                         '${userData?['followers'] ?? 0} Followers',
                                         style: const TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: "rEGULAR",
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.normal),
+                                          fontSize: 14,
+                                          fontFamily: "rEGULAR",
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.normal,
+                                        ),
                                       ),
                                       const SizedBox(width: 12),
                                       Text(
                                         '${userData?['following'] ?? 0} Following',
                                         style: const TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: "rEGULAR",
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.normal),
+                                          fontSize: 14,
+                                          fontFamily: "rEGULAR",
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.normal,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -333,7 +338,7 @@ class _UserProfileState extends State<UserProfile> with TickerProviderStateMixin
                   ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            // Your fab action here
+            // TODO: Implement action
           },
           child: const Icon(Icons.add),
         ),

@@ -32,10 +32,7 @@ class _ProfileCreationState extends State<ProfileCreation> {
 
   // Upload profile picture and banner to backend
   Future<void> pfpANDbanner() async {
-    if (pfpImage == null && bannerImage == null) {
-      errorNotice(context, "Please select at least one image.");
-      return;
-    }
+    
 
     try {
       setState(() => isLoading = true);

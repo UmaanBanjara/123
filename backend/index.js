@@ -272,11 +272,13 @@ app.post(
 
       console.log('[Upload Profile-Banner] User ID:', userId);
       console.log('[Upload Profile-Banner] Files received:', files);
-
-      if (!files || (!files.profile_picture && !files.banner)) {
-        console.log('[Upload Profile-Banner] No files uploaded');
-        return res.status(400).json({ error: 'No files uploaded' });
+      if (!files || (Object.keys(files).length === 0)) {
+        console.log('[Upload Profile-Banner] No images provided, skipping upload');
+        return res.status(200).json({
+          message: 'No files uploaded, skipping image update',
+        });
       }
+
 
       const profilePictureFile = files.profile_picture ? files.profile_picture[0] : null;
       const bannerFile = files.banner ? files.banner[0] : null;

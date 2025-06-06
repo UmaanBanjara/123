@@ -20,6 +20,7 @@ class Homescreen extends StatefulWidget {
 }
 
 class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
+  final String baseurl = 'http://192.168.1.5:3000'; 
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final FlutterSecureStorage storage = const FlutterSecureStorage();
@@ -28,14 +29,13 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
   bool isLoading = false;
   String? error;
 
-  // Fetch user details from backend using stored JWT token
   Future<void> getUserDetails() async {
     setState(() {
       isLoading = true;
       error = null;
     });
 
-    final url = Uri.parse('http://192.168.1.5:3000/getuserdetails');
+    final url = Uri.parse('$baseurl/getuserdetails');
 
     try {
       final token = await storage.read(key: 'jwt_token');
@@ -107,8 +107,7 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.notifications), label: 'Notifications'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
           BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'),
         ],
       ),
@@ -160,13 +159,9 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
                             ),
                             child: CircleAvatar(
                               radius: 28,
-                              backgroundImage:
-                                  userData?['profile_picture_url'] != null
-                                      ? CachedNetworkImageProvider(
-                                          userData!['profile_picture_url'])
-                                      : const AssetImage(
-                                              'assets/images/pngwing.com.png')
-                                          as ImageProvider,
+                              backgroundImage: userData?['profile_picture_url'] != null
+                                  ? CachedNetworkImageProvider('$baseurl${userData!['profile_picture_url']}')
+                                  : const AssetImage('assets/images/pngwing.com.png') as ImageProvider,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -281,9 +276,8 @@ class _HomescreenState extends State<Homescreen> with TickerProviderStateMixin {
             child: CircleAvatar(
               radius: 16,
               backgroundImage: userData?['profile_picture_url'] != null
-                  ? CachedNetworkImageProvider(userData!['profile_picture_url'])
-                  : const AssetImage("assets/images/pngwing.com.png")
-                      as ImageProvider,
+                  ? CachedNetworkImageProvider('$baseurl${userData!['profile_picture_url']}')
+                  : const AssetImage("assets/images/pngwing.com.png") as ImageProvider,
             ),
           ),
         ),

@@ -3,17 +3,23 @@ const path = require('path');
 const os = require('os');
 
 const homeDir = os.homedir();
+
+const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     try {
+      const ext = path.extname(file.originalname).toLowerCase();
+
       if (file.fieldname === 'profile_picture') {
         cb(null, path.join(homeDir, 'uploaded_pfp_by_user'));
       } else if (file.fieldname === 'banner') {
         cb(null, path.join(homeDir, 'uploaded_banner_by_user'));
       } else if (file.fieldname === 'mediafiles') {
-        if (file.mimetype.startsWith('image/')) {
+        if (file.mimetype.startsWith('image/') || imageExtensions.includes(ext)) {
           cb(null, path.join(homeDir, 'uploaded_images_by_user'));
-        } else if (file.mimetype.startsWith('video/')) {
+        } else if (file.mimetype.startsWith('video/') || videoExtensions.includes(ext)) {
           cb(null, path.join(homeDir, 'uploaded_vids_by_user'));
         } else {
           cb(null, path.join(homeDir, 'uploaded_othes'));
@@ -28,7 +34,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     try {
       const ext = path.extname(file.originalname);
-      const userId = req.user && req.user.userId ? req.user.userId : 'unknown'; 
+      const userId = req.user && req.user.userId ? req.user.userId : 'unknown';
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       cb(null, `${file.fieldname}-${userId}-${uniqueSuffix}${ext}`);
     } catch (err) {
