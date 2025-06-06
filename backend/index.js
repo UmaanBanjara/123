@@ -391,11 +391,23 @@ app.get('/getuserdetails', authenticationtoken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+      // Fetch all tweets columns for the user
+    const tweetsResult = await pool.query(
+      `SELECT id, user_id, content, media_url, created_at, location 
+       FROM tweets 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC
+       LIMIT 1
+       `,
+       
+      [userId]
+    );
+
     const userDetails = userResult.rows[0];
 
     console.log('[Get User Details] Retrieved:', userDetails);
 
-    return res.status(200).json({ userDetails });
+    return res.status(200).json({ userDetails : userResult.rows[0] , tweetsResult : tweetsResult.rows[0] });
   } catch (err) {
     console.error('[Get User Details] Error:', err.message);
     return res.status(500).json({ error: 'Server error' });

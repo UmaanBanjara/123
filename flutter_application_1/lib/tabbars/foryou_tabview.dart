@@ -9,6 +9,9 @@ class ForyouTabview extends StatefulWidget {
 }
 
 class _ForyouTabviewState extends State<ForyouTabview> {
+  
+
+  
   @override
   Widget build(BuildContext context) {
      String truncateUsername (String username , {int maxChars = 3}){
