@@ -1,4 +1,5 @@
 import 'package:feed/data/bloc/theme_bloc.dart';
+import 'package:feed/profilecreation/profile_creation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -29,7 +30,7 @@ class Feed extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: theme,
-          home:  SplashScreen(), // You can replace with SplashScreen
+          home: const SplashScreen(),
         );
       },
     );
@@ -54,14 +55,23 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> checkLoginStatus() async {
     final token = await _secureStorage.read(key: 'jwt_token');
+    final profileCompletedStr = await _secureStorage.read(key: 'profile_completed');
+    final profileCompleted = profileCompletedStr == 'true';
 
-    await Future.delayed(const Duration(seconds: 2)); // Simulate splash delay
+    await Future.delayed(const Duration(seconds: 2)); // Splash delay
 
     if (token != null && token.isNotEmpty) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const Homescreen()),
-      );
+      if (profileCompleted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const Homescreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileCreation()),
+        );
+      }
     } else {
       Navigator.pushReplacement(
         context,

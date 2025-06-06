@@ -1,6 +1,10 @@
+import 'package:feed/core/utils/error_notice.dart';
+import 'package:feed/presentation/loginscreen/loginscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:feed/data/bloc/theme_bloc.dart'; // Make sure this points to your ThemeCubit file
+import 'package:feed/data/bloc/theme_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:page_transition/page_transition.dart'; // Make sure this points to your ThemeCubit file
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -10,8 +14,10 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
+
   @override
   Widget build(BuildContext context) {
+    final storage = FlutterSecureStorage();
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -45,8 +51,18 @@ class _SettingsState extends State<Settings> {
                 "Logout",
                 style: TextStyle(fontFamily: "rEGULAR", fontSize: 15),
               ),
-              onTap: () {
-                // Add logout logic here
+              onTap: () async{
+                  await storage.delete(key: 'jwt_token');
+                  await storage.delete(key: 'profile_completed');
+                errorNotice(context, "Please Re-Login");
+                Navigator.pushAndRemoveUntil(context, PageTransition(
+
+                  type : PageTransitionType.fade , 
+                  duration: Duration(milliseconds: 300) ,
+                  reverseDuration: Duration(milliseconds: 300) , 
+                  child: LoginScreen()
+
+                ) , (route) => false);
               },
             ),
           ),

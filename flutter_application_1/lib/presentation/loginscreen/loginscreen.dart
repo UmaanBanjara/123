@@ -6,6 +6,7 @@ import 'package:feed/firebase_auths/google_firebase_auth.dart';
 import 'package:feed/presentation/forgotpass/forgotpass.dart';
 import 'package:feed/presentation/signupscreen/signupscreen.dart';
 import 'package:feed/profilecreation/profile_creation.dart';
+import 'package:feed/presentation/homescreen/homescreen.dart';  // <-- Added import for Homescreen
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -26,9 +27,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordcontroller = TextEditingController();
   bool hidepassword = true;
   bool isloading = false;
-
-  
-  
 
   String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -72,21 +70,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final responsedata = jsonDecode(response.body);
+
         final token = responsedata['token'];
+        final profileCompleted = responsedata['profile_completed']?.toString() ?? 'false'; // <-- New: get profile completion from backend
 
+        // Save token and profile completion status to secure storage
         await storage.write(key: 'jwt_token', value: token);
-
         errorNotice(context, 'Login successful');
 
-        Navigator.pushReplacement(
-          context,
-          PageTransition(
-            type: PageTransitionType.fade,
-            child: const ProfileCreation(),
-            duration: const Duration(milliseconds: 300),
-            reverseDuration: const Duration(milliseconds: 300),
-          ),
-        );
+        // Navigate based on profile completion
+        if (profileCompleted == 'true') {
+          Navigator.pushReplacement(
+            context,
+            PageTransition(
+              type: PageTransitionType.fade,
+              child: const Homescreen(),  // <-- Navigate to Homescreen if profile completed
+              duration: const Duration(milliseconds: 300),
+              reverseDuration: const Duration(milliseconds: 300),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            PageTransition(
+              type: PageTransitionType.fade,
+              child: const ProfileCreation(),  // <-- Navigate to ProfileCreation if profile incomplete
+              duration: const Duration(milliseconds: 300),
+              reverseDuration: const Duration(milliseconds: 300),
+            ),
+          );
+        }
       } else {
         final error = jsonDecode(response.body)['error'] ?? 'Login failed';
         errorNotice(context, error);
@@ -174,12 +187,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(right: 27.0),
                     child: GestureDetector(
-                      onTap : (){
-                        Navigator.push(context, 
-                        PageTransition(type: PageTransitionType.fade ,
-                        duration: Duration(milliseconds: 300) ,
-                        reverseDuration: Duration(milliseconds: 300) ,
-                        child : ForgotPasswordPage()));
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            PageTransition(
+                              type: PageTransitionType.fade,
+                              duration: Duration(milliseconds: 300),
+                              reverseDuration: Duration(milliseconds: 300),
+                              child: ForgotPasswordPage(),
+                            ));
                       },
                       child: Text(
                         "Forgot Password?",
