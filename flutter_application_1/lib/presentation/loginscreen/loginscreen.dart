@@ -185,7 +185,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             type: PageTransitionType.fade,
                             duration: const Duration(milliseconds: 300),
                             reverseDuration: const Duration(milliseconds: 300),
-                            child: ForgotPasswordPage(),
                           ),
                         );
                       },

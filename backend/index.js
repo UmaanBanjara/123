@@ -450,6 +450,57 @@ app.delete('/delete-account', authenticationtoken, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete account.' });
   }
 });
+app.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Find user by email
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No user found with that email' });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.google_id) {
+      return res.status(400).json({ error: 'Google sign-in user cannot reset password here' });
+    }
+
+    // Generate reset token & expiry (1 hour)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+    await pool.query(
+      'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE id = $3',
+      [resetToken, resetTokenExpiry, user.id]
+    );
+
+    // Construct reset link
+    const resetLink = `http://192.168.1.5:${PORT}/reset-password?token=${resetToken}`;
+
+    // Send email
+    const mailOptions = {
+      from: process.env.USER_EMAIL,
+      to: email,
+      subject: 'Password Reset Request',
+      html: `<p>Hi ${user.first_name},</p>
+             <p>You requested a password reset. Click the link below to reset your password:</p>
+             <a href="${resetLink}">${resetLink}</a>
+             <p>If you did not request this, please ignore this email.</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return res.status(200).json({ message: 'Password reset email sent' });
+  } catch (err) {
+    console.error('[Forgot Password] Error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 
 // Start the server
