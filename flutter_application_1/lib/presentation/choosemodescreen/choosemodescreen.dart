@@ -1,4 +1,6 @@
+import 'package:feed/data/bloc/theme_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ImageAnimationScreen extends StatefulWidget {
   @override
@@ -133,7 +135,7 @@ class _ImageAnimationScreenState extends State<ImageAnimationScreen> {
 
                     ElevatedButton(
                       onPressed: () {
-                        // Your choose button logic here
+                        context.read<ThemeCubit>().toggleTheme();
                         print('Choose button pressed');
                       },
                       child: Text('Choose'),
@@ -143,7 +145,6 @@ class _ImageAnimationScreenState extends State<ImageAnimationScreen> {
               ),
             ),
         ],
-      ),
-    );
+      ));
   }
 }

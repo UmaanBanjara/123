@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:feed/data/bloc/theme_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:page_transition/page_transition.dart'; // Make sure this points to your ThemeCubit file
+import 'package:page_transition/page_transition.dart';
+import 'package:http/http.dart' as http;
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -14,10 +15,10 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
+  final storage = FlutterSecureStorage();
 
   @override
   Widget build(BuildContext context) {
-    final storage = FlutterSecureStorage();
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -30,9 +31,9 @@ class _SettingsState extends State<Settings> {
             child: ListTile(
               contentPadding: const EdgeInsets.all(12),
               leading: Icon(isDark ? Icons.nights_stay : Icons.wb_sunny),
-              title: Text(
+              title: const Text(
                 "Change Theme",
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: "rEGULAR",
                   fontSize: 15,
                 ),
@@ -51,17 +52,19 @@ class _SettingsState extends State<Settings> {
                 "Logout",
                 style: TextStyle(fontFamily: "rEGULAR", fontSize: 15),
               ),
-              onTap: () async{
-                  await storage.delete(key: 'jwt_token');
+              onTap: () async {
+                await storage.delete(key: 'jwt_token');
                 errorNotice(context, "Please Re-Login");
-                Navigator.pushAndRemoveUntil(context, PageTransition(
-
-                  type : PageTransitionType.fade , 
-                  duration: Duration(milliseconds: 300) ,
-                  reverseDuration: Duration(milliseconds: 300) , 
-                  child: LoginScreen()
-
-                ) , (route) => false);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  PageTransition(
+                    type: PageTransitionType.fade,
+                    duration: const Duration(milliseconds: 300),
+                    reverseDuration: const Duration(milliseconds: 300),
+                    child: const LoginScreen(),
+                  ),
+                  (route) => false,
+                );
               },
             ),
           ),
@@ -78,8 +81,39 @@ class _SettingsState extends State<Settings> {
                   fontSize: 15,
                 ),
               ),
-              onTap: () {
-                // Add delete account logic here
+              onTap: () async {
+                final token = await storage.read(key: 'jwt_token');
+
+                if (token == null) {
+                  errorNotice(context, 'No token found. Please log in again.');
+                  return;
+                }
+
+                final response = await http.delete(
+                  Uri.parse('http://192.168.1.5:3000/delete-account'), 
+                  headers: {
+                    'Authorization': 'Bearer $token',
+                    'Content-Type': 'application/json',
+                  },
+                );
+
+                if (response.statusCode == 200) {
+                  await storage.delete(key: 'jwt_token');
+                  errorNotice(context, 'Account deleted successfully.');
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      duration: const Duration(milliseconds: 300),
+                      reverseDuration: const Duration(milliseconds: 300),
+                      child: const LoginScreen(),
+                    ),
+                    (route) => false,
+                  );
+                } else {
+                  errorNotice(context, 'Failed to delete account. Please try again.');
+                }
               },
             ),
           ),

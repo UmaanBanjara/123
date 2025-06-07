@@ -425,6 +425,33 @@ app.get('/getuserdetails', authenticationtoken, async (req, res) => {
   }
 });
 
+const deleteUserFiles = require('./delete/delete_user'); // adjust path if needed
+
+app.delete('/delete-account', authenticationtoken, async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    console.log(`[Delete Account] Deleting user ${userId}`);
+
+    // Step 1: Delete user’s uploaded files
+    await deleteUserFiles(userId);
+
+    // Step 2: Delete user’s tweets (if needed)
+    await pool.query('DELETE FROM tweets WHERE user_id = $1', [userId]);
+
+    // Step 3: Delete the user account
+    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
+    console.log(`[Delete Account] User ${userId} and all related data deleted.`);
+
+    return res.status(200).json({ message: 'Account and files deleted successfully.' });
+  } catch (err) {
+    console.error(`[Delete Account] Error:`, err);
+    res.status(500).json({ error: 'Failed to delete account.' });
+  }
+});
+
+
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
